@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://ajax.googleapis.com">
+    <link rel="preconnect" href="https://documentcloud.adobe.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <!-- TODO: Replace with your paper title and authors -->
+    <title>CMPT 362 Project: Manhunt</title>
+
+    <!-- Critical CSS - Load synchronously -->
+    <link rel="stylesheet" href="static/css/bulma.min.css">
+    <link rel="stylesheet" href="static/css/index.css">
+
+    <!-- Non-critical CSS - Load asynchronously -->
+    <link rel="preload" href="static/css/bulma-carousel.min.css" as="style"
+      onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="static/css/bulma-slider.min.css" as="style"
+      onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="static/css/fontawesome.all.min.css" as="style"
+      onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload"
+      href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css"
+      as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+    <!-- Fallback for browsers that don't support preload -->
+    <noscript>
+      <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+      <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+      <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+      <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+    </noscript>
+
+    <!-- Fonts - Optimized loading -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet">
+
+    <!-- Defer non-critical JavaScript -->
+    <script defer
+      src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script defer
+      src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+    <script defer src="static/js/fontawesome.all.min.js"></script>
+    <script defer src="static/js/bulma-carousel.min.js"></script>
+    <script defer src="static/js/bulma-slider.min.js"></script>
+    <script defer src="static/js/index.js"></script>
+
+  </head>
+  <body>
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top"
+      aria-label="Scroll to top">
+      <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <main id="main-content">
+      <section class="hero">
+        <div class="hero-body">
+          <div class="container is-max-desktop">
+            <div class="columns is-centered">
+              <div class="column has-text-centered">
+                <!-- TODO: Replace with your paper title -->
+                <h1 class="title is-1 publication-title">CMPT 362 Project:
+                  Manhunt</h1>
+                <div class="is-size-5 publication-authors">
+                  <!-- TODO: Replace with your paper authors and their personal links -->
+                  <span class="author-block">
+                    Rahul Naterwala,
+                  </span>
+                  <span class="author-block">
+                    Joshua Luo,
+                  </span>
+                  <span class="author-block">
+                    Forest Wang,
+                  </span>
+                  <span class="author-block">
+                    Kai Cho,
+                  </span>
+                  <span class="author-block">
+                    Parth Patel,
+                  </span>
+                </div>
+
+                <div class="is-size-5 publication-authors">
+                  <!-- TODO: Replace with your institution and conference/journal info -->
+                  <span class="author-block">
+                    Simon Fraser University<br>
+                    CMPT 362 D100
+                  </span>
+                </div>
+                <div class="column has-text-centered">
+                  <div class="publication-links">
+                    <!-- APK Download Link -->
+                    <span class="link-block">
+                      <a href="#" download
+                        class="external-link button is-normal is-rounded is-dark">
+                        <span class="icon">
+                          <i class="fas fa-download"></i>
+                        </span>
+                        <span>APK Download</span>
+                      </a>
+                    </span>
+
+                    <!-- GitHub Link -->
+                    <span class="link-block">
+                      <a
+                        href="https://github.com/Joshua-z-Luo/CMPT362_Project_Manhunt"
+                        target="_blank"
+                        class="external-link button is-normal is-rounded is-dark">
+                        <span class="icon">
+                          <i class="fab fa-github"></i>
+                        </span>
+                        <span>GitHub</span>
+                      </a>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Project Pitch -->
+      <section class="hero teaser is-light">
+        <div class="container is-max-desktop">
+          <div class="hero-body">
+            <h2 class="title is-3">Project Pitch</h2>
+
+            <!-- MP4 Video Embed -->
+            <div
+              style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
+              <video controls muted
+                style="position:absolute; top:0; left:0; width:100%; height:100%;">
+                <source src="static/videos/project_pitch.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
+            <!-- Video description -->
+            <h2 class="subtitle has-text-centered">
+              Our app is a real-time multiplayer game where runners try to avoid
+              hunters!
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- Show and Tell 1-->
+      <section class="hero teaser">
+        <div class="container is-max-desktop">
+          <div class="hero-body">
+            <h2 class="title is-3">Show and Tell 1</h2>
+
+            <!-- MP4 Video Embed -->
+            <div
+              style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
+              <video controls muted
+                style="position:absolute; top:0; left:0; width:100%; height:100%;">
+                <source src="static/videos/show_and_tell_1.mp4"
+                  type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
+            <!-- Video description -->
+            <h2 class="subtitle has-text-centered">
+              show_and_tell_1
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- Show and Tell 2-->
+      <section class="hero teaser is-light">
+        <div class="container is-max-desktop">
+          <div class="hero-body">
+            <h2 class="title is-3">Show and Tell 2</h2>
+
+            <!-- MP4 Video Embed -->
+            <div
+              style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
+              <video controls muted
+                style="position:absolute; top:0; left:0; width:100%; height:100%;">
+                <source src="static/videos/show_and_tell_2.mp4"
+                  type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
+            <!-- Video description -->
+            <h2 class="subtitle has-text-centered">
+              show_and_tell_2
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final Demo -->
+      <section class="hero teaser">
+        <div class="container is-max-desktop">
+          <div class="hero-body">
+            <h2 class="title is-3">Final Demo</h2>
+
+            <!-- MP4 Video Embed -->
+            <div
+              style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
+              <video controls muted
+                style="position:absolute; top:0; left:0; width:100%; height:100%;">
+                <source src="static/videos/final_demo.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+
+            <!-- Video description -->
+            <h2 class="subtitle has-text-centered">
+              Final Demo
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- Team Breakdown-->
+      <section class="section hero is-light">
+        <div class="container is-max-desktop">
+          <h2 class="title is-3 has-text-centered">Team Breakdown</h2>
+
+          <table class="table is-striped is-hoverable is-fullwidth">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Tasks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Rahul Naterwala</td>
+                <td>Placeholder</td>
+              </tr>
+              <tr>
+                <td>Joshua Luo</td>
+                <td>Placeholder</td>
+              </tr>
+              <tr>
+                <td>Forest Wang</td>
+                <td>Placeholder</td>
+              </tr>
+              <tr>
+                <td>Kai Cho</td>
+                <td>Placeholder</td>
+              </tr>
+              <tr>
+                <td>Parth Patel</td>
+                <td>Placeholder</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="container">
+          <div class="columns is-centered">
+            <div class="column is-8">
+              <div class="content">
+
+                <p>
+                  This page was built using the <a
+                    href="https://github.com/eliahuhorwitz/Academic-project-page-template"
+                    target="_blank">Academic Project Page Template</a> which
+                  was
+                  adopted from the <a href="https://nerfies.github.io"
+                    target="_blank">Nerfies</a> project page.
+                  You are free to borrow the source code of this website, we
+                  just ask that you link back to this page in the footer. <br>
+                  This website is licensed under a <a rel="license"
+                    href="http://creativecommons.org/licenses/by-sa/4.0/"
+                    target="_blank">Creative
+                    Commons Attribution-ShareAlike 4.0 International
+                    License</a>.
+                </p>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </body>
+  </html>
