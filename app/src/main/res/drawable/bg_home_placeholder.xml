@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Soft radial gradient dark background -->
+    <shape android:shape="rectangle">
+        <gradient
+            android:type="radial"
+            android:gradientRadius="800dp"
+            android:centerX="50%"
+            android:centerY="40%"
+            android:startColor="#303030"
+            android:endColor="#000000"/>
+    </shape>
+    <item android:top="12dp" android:bottom="12dp" android:left="12dp" android:right="12dp">
+        <shape android:shape="rectangle">
+            <stroke android:width="2dp" android:color="#2E6BFF" />
+            <padding android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp"/>
+            <solid android:color="@android:color/transparent"/>
+        </shape>
+    </item>
+</layer-list>
