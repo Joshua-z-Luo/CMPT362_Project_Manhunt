@@ -35,6 +35,14 @@
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Settings Page -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Settings"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
     </application>
 
 </manifest>

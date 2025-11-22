@@ -2,6 +2,7 @@ package joshua_luo.example.cmpt362projectmanhunt
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputFilter
 import android.widget.*
@@ -38,8 +39,15 @@ class MainActivity : ComponentActivity() {
     private lateinit var btnStartLobby: Button
     private lateinit var btnJoinLobby: Button
     private lateinit var btnLeave: Button
+    private lateinit var btnSettings: Button
+    private lateinit var btnStartGame: Button
     private lateinit var tvRoom: TextView
     private lateinit var tvUser: TextView
+    private lateinit var tvHunterSelection: TextView
+    private lateinit var tvHunterRange: TextView
+    private lateinit var tvRunnerRange: TextView
+    private lateinit var tvAbilityMode: TextView
+    private lateinit var tvTimer: TextView
     private lateinit var rv: RecyclerView
     private val adapter = MembersAdapter()
 
@@ -58,8 +66,15 @@ class MainActivity : ComponentActivity() {
         btnStartLobby = findViewById(R.id.btnStartLobby)
         btnJoinLobby = findViewById(R.id.btnJoinLobby)
         btnLeave = findViewById(R.id.btnLeave)
+        btnSettings = findViewById(R.id.btnSettings)
+        btnStartGame = findViewById(R.id.btnStartGame)
         tvRoom = findViewById(R.id.tvRoom)
         tvUser = findViewById(R.id.tvUser)
+        tvHunterSelection = findViewById(R.id.tvHunterSelection)
+        tvHunterRange = findViewById(R.id.tvHunterRange)
+        tvRunnerRange = findViewById(R.id.tvRunnerRange)
+        tvAbilityMode = findViewById(R.id.tvAbilityMode)
+        tvTimer = findViewById(R.id.tvTimer)
         rv = findViewById(R.id.rvMembers)
 
         rv.layoutManager = LinearLayoutManager(this)
@@ -94,12 +109,57 @@ class MainActivity : ComponentActivity() {
             if (!base.isNullOrBlank() && !code.isNullOrBlank()) leaveLobby(base, code) else stopSync()
         }
 
+        btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        btnStartGame.setOnClickListener {
+            startGame()
+        }
+
         renderStatus()
+        updateSettingsDisplay()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateSettingsDisplay()
     }
 
     private fun renderStatus() {
         tvRoom.text = "Current Room: ${currentRoom ?: "-"}"
         tvUser.text = "Your ID: ${userId ?: "-"}"
+    }
+
+    private fun updateSettingsDisplay() {
+        val prefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
+
+        //Hunter Selection
+        tvHunterSelection.text = "Random"
+
+        //Hunter's Range
+        val hunterRange = prefs.getString("hunterRange", "50")?.toIntOrNull() ?: 50
+        tvHunterRange.text = if (hunterRange >= 1000) {
+            "${hunterRange / 1000}km"
+        } else {
+            "${hunterRange}m"
+        }
+
+        //Runner's Range
+        val runnerRange = prefs.getString("runnerRange", "100")?.toIntOrNull() ?: 100
+        tvRunnerRange.text = if (runnerRange >= 1000) {
+            "${runnerRange / 1000}km"
+        } else {
+            "${runnerRange}m"
+        }
+
+        //Ability Mode
+        val abilityMode = prefs.getInt("abilityMode", 0)
+        tvAbilityMode.text = if (abilityMode == 1) "On" else "Off"
+
+        //Timer
+        val timerMinutes = SettingsActivity.getTimerMinutes(this)
+        tvTimer.text = "$timerMinutes Min"
     }
 
     private fun startLobbyFlow(baseUrl: String, name: String?) {
@@ -182,6 +242,39 @@ class MainActivity : ComponentActivity() {
                 renderStatus()
             }
         }
+    }
+
+    private fun startGame() {
+        if (currentRoom == null) {
+            Toast.makeText(this, "Please join or create a lobby first!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val members = adapter.currentList
+        if (members.isEmpty()) {
+            Toast.makeText(this, "No members in lobby!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val timerMinutes = SettingsActivity.getTimerMinutes(this)
+        val hunterRange = SettingsActivity.getHunterRange(this)
+        val runnerRange = SettingsActivity.getRunnerRange(this)
+        val abilityMode = SettingsActivity.isAbilityModeEnabled(this)
+
+        val randomHunter = members.random()
+
+        val message = """
+            Game Starting!
+            Room: $currentRoom
+            Timer: $timerMinutes minutes
+            Hunter: ${randomHunter.name ?: randomHunter.userId}
+            Hunter Range: ${hunterRange}m
+            Runner Range: ${runnerRange}m
+            Abilities: ${if (abilityMode) "ON" else "OFF"}
+        """.trimIndent()
+
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
     }
 
     @SuppressLint("MissingPermission")
