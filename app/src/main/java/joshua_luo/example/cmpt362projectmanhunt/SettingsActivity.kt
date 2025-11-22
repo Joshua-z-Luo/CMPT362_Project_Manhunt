@@ -43,20 +43,20 @@ class SettingsActivity : ComponentActivity() {
     }
 
     private fun setupSpinners() {
-        // Hunter Selection
+        //hunter Selection
         val hunterOptions = arrayOf("Random")
         val hunterAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, hunterOptions)
         hunterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerHunterSelection.adapter = hunterAdapter
 
-        // Ability Mode Spinner
+        //ability Mode Spinner
         val abilityOptions = arrayOf("Off", "On")
         val abilityAdapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_item, abilityOptions)
         abilityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerAbilityMode.adapter = abilityAdapter
 
-        // Timer
+        //timer
         val timerOptions = arrayOf("5 min", "15 min", "30 min", "45 min", "Other")
         val timerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, timerOptions)
         timerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item )
@@ -84,18 +84,15 @@ class SettingsActivity : ComponentActivity() {
         etHunterRange.setText(prefs.getString("hunterRange", "50"))
         etRunnerRange.setText(prefs.getString("runnerRange", "100"))
 
-        // Hunter selection
         spinnerHunterSelection.setSelection(prefs.getInt("hunterSelection", 0))
 
-        // Ability mode
         spinnerAbilityMode.setSelection(prefs.getInt("abilityMode", 0))
 
-        // Timer selection
         val timerSelection = prefs.getInt("timerSelection", 2)
         spinnerTimer.setSelection(timerSelection)
 
-        // Custom timer value
-        if (timerSelection == 4) { // "Other" is selected
+        //custom timer value
+        if (timerSelection == 4) {
             etCustomTimer.setText(prefs.getString("customTimer", ""))
             etCustomTimer.visibility = View.VISIBLE
         }
@@ -142,7 +139,7 @@ class SettingsActivity : ComponentActivity() {
 
         fun getRunnerRange(context: Context): Int {
             val prefs = context.getSharedPreferences("GameSettings", MODE_PRIVATE)
-            return prefs.getString("runnerRange", "100")?.toIntOrNull() ?: 100
+            return prefs.getString("runnerRange", "100" )?.toIntOrNull() ?: 100
         }
 
         fun isAbilityModeEnabled(context: Context): Boolean {

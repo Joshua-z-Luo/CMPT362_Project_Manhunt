@@ -132,12 +132,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateSettingsDisplay() {
-        val prefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
+        val prefs = getSharedPreferences("GameSettings", MODE_PRIVATE )
 
-        //Hunter Selection
+        // Hunter Selection
         tvHunterSelection.text = "Random"
 
-        //Hunter's Range
+        // Hunter's Range
         val hunterRange = prefs.getString("hunterRange", "50")?.toIntOrNull() ?: 50
         tvHunterRange.text = if (hunterRange >= 1000) {
             "${hunterRange / 1000}km"
@@ -153,11 +153,11 @@ class MainActivity : ComponentActivity() {
             "${runnerRange}m"
         }
 
-        //Ability Mode
+        // Ability Mode
         val abilityMode = prefs.getInt("abilityMode", 0)
         tvAbilityMode.text = if (abilityMode == 1) "On" else "Off"
 
-        //Timer
+        // Timer
         val timerMinutes = SettingsActivity.getTimerMinutes(this)
         tvTimer.text = "$timerMinutes Min"
     }
@@ -261,20 +261,26 @@ class MainActivity : ComponentActivity() {
         val runnerRange = SettingsActivity.getRunnerRange(this)
         val abilityMode = SettingsActivity.isAbilityModeEnabled(this)
 
+        //randomly select hunter
         val randomHunter = members.random()
 
-        val message = """
-            Game Starting!
-            Room: $currentRoom
-            Timer: $timerMinutes minutes
-            Hunter: ${randomHunter.name ?: randomHunter.userId}
-            Hunter Range: ${hunterRange}m
-            Runner Range: ${runnerRange}m
-            Abilities: ${if (abilityMode) "ON" else "OFF"}
-        """.trimIndent()
+        val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
+        prefs.edit().apply {
+            putString("token", token)
+            apply()
+        }
 
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-
+        val intent = Intent(this, CountdownActivity::class.java).apply {
+            putExtra("hunterId", randomHunter.userId)
+            putExtra("userId", userId)
+            putExtra("roomCode", currentRoom)
+            putExtra("baseUrl", lastBaseUrl)
+            putExtra("timerMinutes", timerMinutes)
+            putExtra("hunterRange", hunterRange)
+            putExtra("runnerRange", runnerRange)
+            putExtra("abilityMode", abilityMode)
+        }
+        startActivity(intent)
     }
 
     @SuppressLint("MissingPermission")
