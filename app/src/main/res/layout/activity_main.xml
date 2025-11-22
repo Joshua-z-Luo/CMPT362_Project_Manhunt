@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:title="Rooms Client"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:titleCentered="true" />
+
+    <ScrollView
+        android:layout_marginTop="?attr/actionBarSize"
+        android:fillViewport="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:padding="16dp"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBaseUrl"
+                    android:hint="Base URL"
+                    android:text="https://cmpt362-rooms-backend.joshua-z-luo.workers.dev"
+                    android:inputType="textUri"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDisplayName"
+                    android:hint="Display Name"
+                    android:inputType="textPersonName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRoomCode"
+                    android:hint="Room Code (EX:ABC456)"
+                    android:inputType="textCapCharacters"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStartLobby"
+                    android:text="Start Lobby"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:backgroundTint="?attr/colorPrimary"
+                    android:textColor="?attr/colorOnPrimary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnJoinLobby"
+                    android:text="Join Lobby"
+                    android:layout_marginStart="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:backgroundTint="?attr/colorSecondaryContainer"
+                    android:textColor="?attr/colorOnSecondaryContainer" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLeave"
+                    android:text="Leave"
+                    android:layout_marginStart="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:backgroundTint="?attr/colorSurface"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface" />
+            </LinearLayout>
+
+            <!-- Settings and Start Game Buttons -->
+            <LinearLayout
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSettings"
+                    android:text="Settings"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:backgroundTint="?attr/colorTertiary"
+                    android:textColor="?attr/colorOnTertiary"
+                    app:icon="@android:drawable/ic_menu_preferences"
+                    app:iconGravity="textStart" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStartGame"
+                    android:text="Start Game"
+                    android:layout_marginStart="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:backgroundTint="?attr/colorError"
+                    android:textColor="?attr/colorOnError"
+                    app:icon="@android:drawable/ic_media_play"
+                    app:iconGravity="textStart" />
+            </LinearLayout>
+
+            <!-- Game Settings Display Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_marginTop="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardUseCompatPadding="true"
+                app:cardBackgroundColor="#FFB71C1C">
+                <LinearLayout
+                    android:padding="16dp"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Hunter Selection -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:text="SELECT HUNTER:"
+                            android:textStyle="bold"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                        <TextView
+                            android:id="@+id/tvHunterSelection"
+                            android:text="Random"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:textAlignment="textEnd"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <!-- Hunter's Range -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+                        <TextView
+                            android:text="Hunter's Range:"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                        <TextView
+                            android:id="@+id/tvHunterRange"
+                            android:text="2km"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:textAlignment="textEnd"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <!-- Runner's Range -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+                        <TextView
+                            android:text="Runner's Range:"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                        <TextView
+                            android:id="@+id/tvRunnerRange"
+                            android:text="1km"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:textAlignment="textEnd"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <!-- Ability Mode -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+                        <TextView
+                            android:text="Ability Mode:"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                        <TextView
+                            android:id="@+id/tvAbilityMode"
+                            android:text="On"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:textAlignment="textEnd"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <!-- Timer -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+                        <TextView
+                            android:text="Timer:"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                        <TextView
+                            android:id="@+id/tvTimer"
+                            android:text="30 Min"
+                            android:textSize="14sp"
+                            android:textColor="#FFFFFFFF"
+                            android:textAlignment="textEnd"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_marginTop="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardUseCompatPadding="true">
+                <LinearLayout
+                    android:padding="16dp"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:id="@+id/tvRoom"
+                        android:text="Current Room: -"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/tvUser"
+                        android:text="Your ID: -"
+                        android:layout_marginTop="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:text="Members"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMembers"
+                android:layout_marginTop="8dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
