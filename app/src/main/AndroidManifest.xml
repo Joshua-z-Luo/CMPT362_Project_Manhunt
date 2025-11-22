@@ -21,7 +21,7 @@
 
         <meta-data
             android:name = "com.google.android.geo.API_KEY"
-            android:value = "AIzaSyDj3sj8b-WFRk-aq0fvw8m6gUDb7ZmVUy4" />
+            android:value = "enter_your_api" />
 
         <!-- New launcher activity (Home screen) -->
         <activity
