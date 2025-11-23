@@ -44,14 +44,23 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
 
+        <!-- Profile -->
         <activity
             android:name=".ProfileActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt"/>
 
+        <!-- Profile Settings -->
         <activity
             android:name=".ProfileSettingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Help -->
+        <activity
+            android:name=".HelpActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />

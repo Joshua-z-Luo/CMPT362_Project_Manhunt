@@ -15,6 +15,7 @@ class HomeActivity : ComponentActivity() {
         val btnSettings: Button = findViewById(R.id.btnSettings)
         val btnLeaderboard: Button = findViewById(R.id.btnLeaderboard)
         val btnExit: Button = findViewById(R.id.btnExit)
+        val btnHelp: Button = findViewById(R.id.btnHelp)
 
         btnPlay.setOnClickListener {
             // Goes to the lobby creation page (MainActivity)
@@ -29,7 +30,9 @@ class HomeActivity : ComponentActivity() {
         btnLeaderboard.setOnClickListener {
             // Does nothing for now
         }
-
+        btnHelp.setOnClickListener {
+            startActivity(Intent(this, HelpActivity::class.java))
+        }
         // Exit app
         btnExit.setOnClickListener {
             finishAffinity()
