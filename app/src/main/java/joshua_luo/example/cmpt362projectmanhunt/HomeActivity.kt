@@ -23,7 +23,8 @@ class HomeActivity : ComponentActivity() {
 
         // UI placeholders for later
         btnSettings.setOnClickListener {
-            // Does nothing for now
+            // Goes to profile settings
+            startActivity(Intent(this, ProfileActivity::class.java))
         }
         btnLeaderboard.setOnClickListener {
             // Does nothing for now

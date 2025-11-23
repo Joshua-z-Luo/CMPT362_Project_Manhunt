@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Permissions -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -42,6 +44,18 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
 
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt"/>
+
+        <activity
+            android:name=".ProfileSettingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
         <!-- Settings Page -->
         <activity
             android:name=".SettingsActivity"
@@ -62,6 +76,17 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="joshua_luo.example.cmpt362projectmanhunt"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">Cmpt362ProjectManhunt</string>
+
+    <!-- Profile Settings -->
+    <string name="profile_settings">Profile Settings</string>
+    <string name="profile_photo">Profile Photo</string>
+    <string name="change_btn">CHANGE</string>
+    <string name="username">Username</string>
+    <string name="username_text">username</string>
+    <string name="notification">Notifications</string>
+    <string name="volume">Volume</string>
+    <string name="match_history">Match History</string>
+    <string name="achievements">Achievements</string>
+
+    <string name="save_btn">Save</string>
+    <string name="cancel_btn">Cancel</string>
+
 </resources>
