@@ -15,11 +15,15 @@ class HelpActivity: AppCompatActivity() {
     private lateinit var runnerRulesHeader: TextView
     private lateinit var hunterAbilityHeader: TextView
     private lateinit var runnerAbilityHeader: TextView
+    private lateinit var achievementHeader: TextView
+
+
     private lateinit var gameRulesContent: LinearLayout
     private lateinit var hunterRulesContent: LinearLayout
     private lateinit var runnerRulesContent: LinearLayout
     private lateinit var hunterAbilityContent: LinearLayout
     private lateinit var runnerAbilityContent: LinearLayout
+    private lateinit var achievementContent: LinearLayout
 
 
     private lateinit var gameRulesText: TextView
@@ -27,6 +31,7 @@ class HelpActivity: AppCompatActivity() {
     private lateinit var runnerRulesText: TextView
     private lateinit var hunterAbilityText: TextView
     private lateinit var runnerAbilityText: TextView
+    private lateinit var achievementText: TextView
 
 
     private lateinit var exitBtn: Button
@@ -40,12 +45,14 @@ class HelpActivity: AppCompatActivity() {
         runnerRulesHeader = findViewById(R.id.runner_rules_header)
         hunterAbilityHeader = findViewById(R.id.hunter_abilities_header)
         runnerAbilityHeader = findViewById(R.id.runner_abilities_header)
+        achievementHeader = findViewById(R.id.achievement_header)
 
         gameRulesContent = findViewById(R.id.game_rules)
         hunterRulesContent = findViewById(R.id.hunter_rules)
         runnerRulesContent = findViewById(R.id.runner_rules)
         hunterAbilityContent = findViewById(R.id.hunter_abilities)
         runnerAbilityContent = findViewById(R.id.runner_abilities)
+        achievementContent = findViewById(R.id.achievements)
 
         gameRulesText = findViewById(R.id.game_rule_text)
         hunterRulesText = findViewById(R.id.hunter_rules_text)
@@ -88,6 +95,13 @@ class HelpActivity: AppCompatActivity() {
                 runnerAbilityContent.visibility = View.VISIBLE
             } else {
                 runnerAbilityContent.visibility = View.GONE
+            }
+        }
+        achievementHeader.setOnClickListener {
+            if (achievementContent.visibility == View.GONE) {
+                achievementContent.visibility = View.VISIBLE
+            } else {
+                achievementContent.visibility = View.GONE
             }
         }
         exitBtn.setOnClickListener {
