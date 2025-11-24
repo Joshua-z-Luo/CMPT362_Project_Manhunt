@@ -30,26 +30,10 @@ class ProfileActivity: AppCompatActivity() {
         editProfileBtn = findViewById(R.id.edit_profile)
         exitBtn = findViewById(R.id.exit_profile)
 
-        // Profile Photo
-        val profileImgFile = File(getExternalFilesDir(null), "profile_photo.jpg")
-        if (profileImgFile.exists()) {
-            val imgUri = FileProvider.getUriForFile(
-                this,
-                "joshua_luo.example.cmpt362projectmanhunt",
-                profileImgFile
-            )
-            val bitmap = Util.getBitmap(this, imgUri)
-            profilePhoto.setImageBitmap(bitmap)
-        }
-
-        // Username
-        val profilePrefs = getSharedPreferences("ProfilePrefs", MODE_PRIVATE)
-        val name = profilePrefs.getString("username_key", "")
-        username.text = String.format("Username: %s", name)
 
         // Achievements
         // TODO: use actual data
-        val achievementsList = listOf("Fist Win", "Top Hunter", "Top Runner")
+        val achievementsList = listOf("First Win", "Top Hunter", "Top Runner")
         achievements.layoutManager = LinearLayoutManager(this)
         achievements.adapter = AchievementAdapter(achievementsList)
 
@@ -57,7 +41,10 @@ class ProfileActivity: AppCompatActivity() {
         // TODO: use actual data
         val matchList = listOf(
             MatchHistoryItem("Game001", "Runner", "Runner", 12.5),
-            MatchHistoryItem("Game002", "Hunter", "Hunter", 8.3)
+            MatchHistoryItem("Game002", "Hunter", "Hunter", 8.3),
+            MatchHistoryItem("Game003", "Runner", "Hunter", 10.3),
+            MatchHistoryItem("Game004", "Hunter", "Runner", 7.6),
+            MatchHistoryItem("Game005", "Hunter", "Runner", 8.3),
         )
         matchHistory.layoutManager = LinearLayoutManager(this)
         matchHistory.adapter = HistoryAdapter(matchList)
@@ -70,7 +57,29 @@ class ProfileActivity: AppCompatActivity() {
             // exit profile
             finish()
         }
-
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateUI()
+    }
+
+    private fun updateUI() {
+        // Profile Photo
+        val profileImgFile = File(getExternalFilesDir(null), "profile_photo.jpg")
+        if (profileImgFile.exists()) {
+            val imgUri = FileProvider.getUriForFile(
+                this,
+                "joshua_luo.example.cmpt362projectmanhunt",
+                profileImgFile
+            )
+            val bitmap = Util.getBitmap(this, imgUri)
+            profilePhoto.setImageBitmap(bitmap)
+        }
+        // Username
+        val profilePrefs = getSharedPreferences("ProfilePrefs", MODE_PRIVATE)
+        val name = profilePrefs.getString("username_key", "")
+        username.text = String.format("Username: %s", name)
+
+    }
 }

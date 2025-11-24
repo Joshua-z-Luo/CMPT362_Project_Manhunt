@@ -15,4 +15,53 @@
     <string name="save_btn">Save</string>
     <string name="cancel_btn">Cancel</string>
 
+    <!-- Help Page -->
+    <string name="gameRuleText"><b>Players:</b>
+        \n- Players are divided into Hunters and Runners.
+        \n- Hunters try to catch Runners before the time runs out.
+        \n- Runners try to avoid being caught and survive until the timer ends.
+        \n\n<b>Location:</b>
+        \n- The game is played in the real world within a designated play area.
+        \n- Each person is assigned one random passive and one random active ability based on their role.
+        \n\n<b>Passive Ability</b>
+        \nPassive abilities is always active without the player needing to activate it.
+        \n\n<b>Active Ability</b>
+        \nActive abilities must be activated manually by the player. After activation, the ability will go on cooldown before it can be used again.
+    </string>
+
+    <string name="hunterRuleText">Hunters can move freely within the designated play area.
+        \nTagging a Runner eliminates that Runner from the current game.
+    </string>
+
+    <string name="runnerRuleText">Runners must stay within the designated play area.
+        \nRunners cannot attack or obstruct the Hunters.
+        \nEliminated Runners become spectators and cannot assist the Hunters.
+    </string>
+
+    <string name="hunterAbilityText"><b>Passive Abilities</b>
+        \n<b>Scan:</b> Increase detection radius.
+        \n<b>Tracker:</b> Briefly reveals a random Runner every few seconds.
+        \n<b>Tough:</b> Reduce duration of negative effects.
+        \n\n<b>Active Abilities</b>
+        \n<b>Compass:</b> Reveals the direction to the nearest Runner for a few seconds.
+        \n<b>Trap:</b> Set a trap on the map. Reveal Runners who enters the trapped area.
+        \n<b>Invisibility:</b> Runners cannot see the Hunter location while ability is active.
+        \n<b>Lock On:</b> Lock onto first spotted Runner. Runner remains revealed for a few extra seconds after leaving the detection radius.
+        \n<b>Ring:</b> Ring the phones of all Runners for a few seconds.
+    </string>
+
+    <string name="runnerAbilityText"><b>Passive Abilities</b>
+        \n<b>Ping:</b> Briefly reveal all Hunter locations every few seconds.
+        \n<b>Aware:</b> Increase Hunter detection radius.
+        \n<b>Warning:</b> Show an indicator if the Hunter is within a certain distance.
+        \n<b>Stationary:</b> Marker disappears if standing still for an extended period.
+        \n<b>Hidden:</b> Reduce reveal radius.
+        \n\n<b>Active Abilities</b>
+        \n<b>Invisibility:</b> Hunters cannot see Runner location for a short duration.
+        \n<b>Flash Bang:</b> Temporarily turn Hunter’s map white.
+        \n<b>Decoy:</b> Send a fake decoy on the map.
+        \n<b>Smoke Screen:</b> Temporarily obscures Runner locations on the Hunter map in a radius around the Runner.
+        \n<b>Trap:</b> Set a trap on the map. Notify all Runners when Hunters trigger the trap.
+    </string>
+
 </resources>

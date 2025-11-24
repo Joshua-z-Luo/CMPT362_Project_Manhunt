@@ -26,8 +26,8 @@ class HistoryAdapter(private val items: List<MatchHistoryItem>) :
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
         val item = items[position]
         holder.gameIdText.text = item.gameId
-        holder.winnerText.text = item.winner
-        holder.roleText.text = item.role
+        holder.winnerText.text = "Winner: ${item.winner}"
+        holder.roleText.text = "Your Role: ${item.role}"
         holder.durationText.text = "${item.duration} min"
     }
 
