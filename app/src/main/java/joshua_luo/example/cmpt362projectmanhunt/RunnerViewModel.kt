@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import joshua_luo.example.cmpt362projectmanhunt.model.Ability
-import joshua_luo.example.cmpt362projectmanhunt.model.PowerupType
+import joshua_luo.example.cmpt362projectmanhunt.model.PowerupTypes
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -23,14 +23,14 @@ import kotlinx.coroutines.launch
  */
 class RunnerViewModel : ViewModel() {
 
-    private val _currentAbility = MutableLiveData<Ability?>()
+    private val _currentAbility = MutableLiveData<Ability?>(null)
     val currentAbility: LiveData<Ability?> = _currentAbility
 
     private val _isAbilityActive = MutableLiveData(false)
     val isAbilityActive: LiveData<Boolean> = _isAbilityActive
 
     private val _isAbilityOnCooldown = MutableLiveData(false)
-    val isAbilityOnCooldown: LiveData<Boolean> = _isAbilityOnCooldown
+    val isOnCooldown: LiveData<Boolean> = _isAbilityOnCooldown
 
     private val _remainingDurationMillis = MutableLiveData(0L)
     val remainingDurationMillis: LiveData<Long> = _remainingDurationMillis
@@ -38,14 +38,9 @@ class RunnerViewModel : ViewModel() {
     private var timerJob: Job? = null
 
     /**
-     * Assigns an ability to the runner.
-     * Call this when the player picks up a power-up.
+     * Give the runner a new ability.
      */
-    fun grantAbility(
-        type: PowerupType,
-        durationMs: Long,
-        cooldownMs: Long
-    ) {
+    fun grantAbility(type: PowerupTypes, durationMs: Long, cooldownMs: Long) {
         _currentAbility.value = Ability(
             id = System.currentTimeMillis(),
             type = type,
@@ -61,14 +56,16 @@ class RunnerViewModel : ViewModel() {
         _remainingDurationMillis.value = 0L
     }
 
-
+    /**
+     * Called when the runner taps "Use Ability".
+     */
     fun useAbility() {
         val ability = _currentAbility.value ?: return
 
         // Ignore if already active, on cooldown, or no real ability
         if (_isAbilityActive.value == true ||
             _isAbilityOnCooldown.value == true ||
-            ability.type == PowerupType.None
+            ability.type == PowerupTypes.None
         ) return
 
         _isAbilityActive.value = true
@@ -91,11 +88,11 @@ class RunnerViewModel : ViewModel() {
                 }
             }
 
-            // Ability effect ends
+            // effect ends
             _isAbilityActive.value = false
             _remainingDurationMillis.value = 0L
 
-            // Start cooldown
+            // cooldown
             if (ability.cooldownMillis > 0L) {
                 _isAbilityOnCooldown.value = true
                 delay(ability.cooldownMillis)
@@ -104,13 +101,23 @@ class RunnerViewModel : ViewModel() {
         }
     }
 
+    /**
+     * @return true if Invisibility is currently active.
+     */
+    fun isInvisibleNow(): Boolean {
+        val ability = _currentAbility.value
+        return ability?.type == PowerupTypes.Invisibility && _isAbilityActive.value == true
+    }
 
+    /**
+     * Consume Shield if it is active.
+     * @return true if the shield blocked the tag.
+     */
     fun consumeShieldIfAvailable(): Boolean {
         val ability = _currentAbility.value
-        val shieldActive = ability?.type == PowerupType.Shield && _isAbilityActive.value == true
+        val shieldActive = ability?.type == PowerupTypes.Shield && _isAbilityActive.value == true
 
         if (shieldActive) {
-            // Shield absorbed one tag → turn it off
             _isAbilityActive.value = false
             _currentAbility.value = ability.copy(
                 isActive = false,

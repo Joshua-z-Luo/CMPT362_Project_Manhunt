@@ -6,7 +6,7 @@ package joshua_luo.example.cmpt362projectmanhunt.model
  */
 data class Ability(
     val id: Long,
-    val type: PowerupType,
+    val type: PowerupTypes,
     val location: Point? = null,
     val isActive: Boolean = false,
     val durationMillis: Long,
