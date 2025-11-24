@@ -14,7 +14,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="#FFB71C1C"
         android:elevation="4dp"
-        app:title="Player Profile"
+        app:title="Help"
         app:titleTextColor="#FFFFFF" />
 
     <ScrollView
