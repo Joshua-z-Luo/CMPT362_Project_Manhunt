@@ -64,4 +64,15 @@
         \n<b>Trap:</b> Set a trap on the map. Notify all Runners when Hunters trigger the trap.
     </string>
 
+    <string name="achievementText"><b>Achievements:</b>
+        \n<b>First Match:</b> Complete your first match.
+        \n<b>First Win:</b> Earn your first win.
+        \n<b>Veteran:</b> Play 50 matches.
+        \n<b>Win Streak:</b> Win 10 games in a row.
+        \n<b>Clutch:</b> Win a match in the final ten seconds.
+        \n<b>Hunter:</b> Tag 20 Runners.
+        \n<b>Escape Artist:</b> Survive 20 matches.
+
+    </string>
+
 </resources>

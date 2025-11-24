@@ -33,7 +33,7 @@ class ProfileActivity: AppCompatActivity() {
 
         // Achievements
         // TODO: use actual data
-        val achievementsList = listOf("First Win", "Top Hunter", "Top Runner")
+        val achievementsList = listOf("First Win", "Veteran", "Escape Artist")
         achievements.layoutManager = LinearLayoutManager(this)
         achievements.adapter = AchievementAdapter(achievementsList)
 
