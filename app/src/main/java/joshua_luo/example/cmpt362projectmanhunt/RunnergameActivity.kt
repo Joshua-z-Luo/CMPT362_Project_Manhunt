@@ -33,7 +33,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
+class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     private val client by lazy { OkHttpClient.Builder().callTimeout(15, TimeUnit.SECONDS).build() }
     private lateinit var fused: FusedLocationProviderClient
@@ -41,22 +41,24 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
     private var pollJob: Job? = null
     private var gameTimer: CountDownTimer? = null
     private var googleMap: GoogleMap? = null
+    private var runnerMarker: Marker? = null
+    private var runnerCircle: Circle? = null
     private var hunterMarker: Marker? = null
-    private var hunterCircle: Circle? = null
-    private val runnerMarkers = mutableMapOf<String, Marker>()
     private lateinit var tvGameTimer: TextView
     private lateinit var abilityButton: Button
+    private lateinit var btnCaught: Button
     private var selectedAbility: Int = -1 // -1 means no selection, 0-2 for ability1-3
     private var userId: String? = null
     private var token: String? = null
     private var roomCode: String? = null
     private var baseUrl: String? = null
     private var timerMinutes: Int = 30
-    private var hunterRange: Int = 50
+    private var runnerRange: Int = 100
     private var abilityMode: Boolean = false
+    private var hunterId: String? = null
 
-    private var hunterLat: Double = 0.0
-    private var hunterLon: Double = 0.0
+    private var runnerLat: Double = 0.0
+    private var runnerLon: Double = 0.0
 
     private val permReq = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -64,19 +66,20 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_huntergame )
+        setContentView(R.layout.activity_runnergame)
 
         fused = LocationServices.getFusedLocationProviderClient(this)
         tvGameTimer = findViewById(R.id.tvGameTimer)
         abilityButton = findViewById(R.id.abilityButton)
+        btnCaught = findViewById(R.id.btnCaught)
 
         userId = intent.getStringExtra("userId")
         roomCode = intent.getStringExtra("roomCode")
         baseUrl = intent.getStringExtra("baseUrl")
-        timerMinutes = intent.getIntExtra("timerMinutes", 30 )
-        hunterRange = intent.getIntExtra("hunterRange", 50)
+        timerMinutes = intent.getIntExtra("timerMinutes", 30)
+        runnerRange = intent.getIntExtra("runnerRange", 100)
         abilityMode = intent.getBooleanExtra("abilityMode", false)
-
+        hunterId = intent.getStringExtra("hunterId")
 
         val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
         token = prefs.getString("token", null)
@@ -88,6 +91,13 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        // Set up caught button click listener
+        btnCaught.setOnClickListener {
+            val intent = Intent(this, CaughtActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
 
         // Set up ability button click listener
         abilityButton.setOnClickListener {
@@ -107,26 +117,26 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         }
 
         startLocationTracking()
-        startPollingRunners()
+        startPollingHunter()
     }
 
     private fun startGameTimer() {
         val totalMillis = timerMinutes * 60 * 1000L
         gameTimer = object : CountDownTimer(totalMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                val minutes = (millisUntilFinished / 1000) /60
-                val seconds = (millisUntilFinished / 1000) %60
+                val minutes = (millisUntilFinished / 1000) / 60
+                val seconds = (millisUntilFinished / 1000) % 60
                 tvGameTimer.text = "${minutes}min ${seconds}sec"
             }
 
             override fun onFinish() {
                 tvGameTimer.text = "0min 0sec"
-                Toast.makeText(this@HunterGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@RunnerGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
 
                 // Redirect to Game End Summary page
-                val intent = Intent(this@HunterGameActivity, GameEndActivity::class.java)
+                val intent = Intent(this@RunnerGameActivity, GameEndActivity::class.java)
                 intent.putExtra("finalTime", "0min 0sec")
-                intent.putExtra("isHunter", true)
+                intent.putExtra("isHunter", false)
                 startActivity(intent)
                 finish()
             }
@@ -147,18 +157,18 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         val cb = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val loc = result.lastLocation ?: return
-                hunterLat = loc.latitude
-                hunterLon = loc.longitude
+                runnerLat = loc.latitude
+                runnerLon = loc.longitude
 
-                updateHunterMarker(hunterLat, hunterLon)
+                updateRunnerMarker(runnerLat, runnerLon)
 
-                lifecycleScope.launch(Dispatchers.IO ) {
+                lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val body = JSONObject().apply {
                             put("userId", uid)
                             put("token", tok)
-                            put("lat", hunterLat)
-                            put("lon", hunterLon)
+                            put("lat", runnerLat)
+                            put("lon", runnerLon)
                         }.toString()
                         val r = Request.Builder()
                             .url("$base/rooms/$code/loc")
@@ -174,37 +184,37 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         fused.requestLocationUpdates(req, cb, mainLooper)
     }
 
-    private fun updateHunterMarker(lat: Double, lon: Double) {
+    private fun updateRunnerMarker(lat: Double, lon: Double) {
         val position = LatLng(lat, lon)
 
-        if (hunterMarker == null) {
-            hunterMarker = googleMap?.addMarker(
+        if (runnerMarker == null) {
+            runnerMarker = googleMap?.addMarker(
                 MarkerOptions()
                     .position(position)
-                    .title("You (Hunter)")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                    .title("You (Runner)")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
             )
 
-            hunterCircle = googleMap?.addCircle(
+            runnerCircle = googleMap?.addCircle(
                 CircleOptions()
                     .center(position)
-                    .radius(hunterRange.toDouble())
-                    .strokeColor(Color.RED )
+                    .radius(runnerRange.toDouble())
+                    .strokeColor(Color.BLUE)
                     .strokeWidth(3f)
-                    .fillColor(Color.argb(50, 255, 0, 0))
+                    .fillColor(Color.argb(50, 0, 0, 255))
             )
-
 
             googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         } else {
-            hunterMarker?.position = position
-            hunterCircle?.center = position
+            runnerMarker?.position = position
+            runnerCircle?.center = position
         }
     }
 
-    private fun startPollingRunners() {
+    private fun startPollingHunter() {
         val base = baseUrl ?: return
         val code = roomCode ?: return
+        val hId = hunterId ?: return
 
         pollJob?.cancel()
         pollJob = lifecycleScope.launch(Dispatchers.IO) {
@@ -218,7 +228,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                             val arr = obj.optJSONArray("members") ?: JSONArray()
 
                             withContext(Dispatchers.Main) {
-                                updateRunnerMarkers(arr)
+                                updateHunterMarker(arr, hId)
                             }
                         }
                     }
@@ -228,54 +238,43 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun updateRunnerMarkers(membersArray: JSONArray) {
-        val currentRunnerIds = mutableSetOf<String>()
-
+    private fun updateHunterMarker(membersArray: JSONArray, hunterId: String) {
         for (i in 0 until membersArray.length()) {
             val m = membersArray.getJSONObject(i)
             val id = m.optString("userId")
 
-            if (id == userId) continue
+            if (id != hunterId) continue
 
             val locObj = m.optJSONObject("loc") ?: continue
             val lat = locObj.optDouble("lat")
             val lon = locObj.optDouble("lon")
 
-            if (lat == 0.0 &&lon == 0.0) continue
+            if (lat == 0.0 && lon == 0.0) continue
 
-            currentRunnerIds.add(id)
+            val distance = calculateDistance(runnerLat, runnerLon, lat, lon)
 
-            val distance = calculateDistance(hunterLat, hunterLon, lat, lon)
-
-            if (distance <= hunterRange) {
+            if (distance <= runnerRange) {
                 val position = LatLng(lat, lon)
-                val name = m.optString("name", "").ifBlank { id }
+                val name = m.optString("name", "").ifBlank { "Hunter" }
 
-                if (runnerMarkers.containsKey(id)) {
-                    runnerMarkers[id]?.position = position
-                } else {
-                    val marker = googleMap?.addMarker(
+                if (hunterMarker == null) {
+                    hunterMarker = googleMap?.addMarker(
                         MarkerOptions()
                             .position(position)
-                            .title("Runner: $name")
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE  ))
+                            .title("Hunter: $name")
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                     )
-                    if (marker != null) {
-                        runnerMarkers[id] = marker
-                    }
+                } else {
+                    hunterMarker?.position = position
                 }
             } else {
-                runnerMarkers[id]?.remove()
-                runnerMarkers.remove(id)
+                hunterMarker?.remove()
+                hunterMarker = null
             }
-        }
-
-        val toRemove = runnerMarkers.keys - currentRunnerIds
-        toRemove.forEach {
-            runnerMarkers[it]?.remove()
-            runnerMarkers.remove(it)
+            break
         }
     }
+
     // reference https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val R = 6371000.0
@@ -283,14 +282,14 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         val dLon = Math.toRadians(lon2 - lon1)
         val a = sin(dLat / 2) * sin(dLat / 2) + cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
                 sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a ))
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
     }
 
     private fun showAbilityDialog() {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_ability_selection)
+        dialog.setContentView(R.layout.dialog_runner_ability_selection)
         dialog.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.9).toInt(),
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -308,13 +307,12 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
         // Helper function to update card selection
         fun updateCardSelection(selected: MaterialCardView, ability: Int) {
-            // Reset all cards
+
             cardAbility1.strokeColor = android.graphics.Color.TRANSPARENT
             cardAbility2.strokeColor = android.graphics.Color.TRANSPARENT
             cardAbility3.strokeColor = android.graphics.Color.TRANSPARENT
 
-            // Highlight selected card
-            selected.strokeColor = getColor(R.color.purple_500)
+            selected.strokeColor = Color.parseColor("#FF1976D2")
             selectedAbility = ability
             btnUse.isEnabled = true
         }
@@ -338,16 +336,16 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         btnUse.setOnClickListener {
             when (selectedAbility) {
                 0 -> {
-                    Toast.makeText(this, "Using Ability 1 - Not yet implemented", Toast.LENGTH_SHORT).show()
-                    // TODO: Implement Ability 1 functionality
+                    Toast.makeText(this, "Using Runner Ability 1 - Not yet implemented", Toast.LENGTH_SHORT).show()
+                    // TODO: Implement Runner Ability 1 functionality
                 }
                 1 -> {
-                    Toast.makeText(this, "Using Ability 2 - Not yet implemented", Toast.LENGTH_SHORT).show()
-                    // TODO: Implement Ability 2 functionality
+                    Toast.makeText(this, "Using Runner Ability 2 - Not yet implemented", Toast.LENGTH_SHORT).show()
+                    // TODO: Implement Runner Ability 2 functionality
                 }
                 2 -> {
-                    Toast.makeText(this, "Using Ability 3 - Not yet implemented", Toast.LENGTH_SHORT).show()
-                    // TODO: Implement Ability 3 functionality
+                    Toast.makeText(this, "Using Runner Ability 3 - Not yet implemented", Toast.LENGTH_SHORT).show()
+                    // TODO: Implement Runner Ability 3 functionality
                 }
             }
             dialog.dismiss()
@@ -363,3 +361,17 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         gameTimer?.cancel()
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

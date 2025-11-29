@@ -43,6 +43,22 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/headerLayout"/>
+        android:layout_below="@id/headerLayout"
+        android:layout_above="@id/abilityButton"/>
+
+    <!-- Ability Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/abilityButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:text="Abilities"
+        android:textSize="18sp"
+        android:padding="16dp"
+        map:backgroundTint="?attr/colorPrimary"
+        android:textColor="?attr/colorOnPrimary"
+        map:icon="@android:drawable/ic_menu_view"
+        map:iconGravity="textStart"/>
 
 </RelativeLayout>

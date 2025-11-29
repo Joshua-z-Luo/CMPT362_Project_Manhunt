@@ -99,7 +99,7 @@
                     android:textColor="?attr/colorOnSurface" />
             </LinearLayout>
 
-            <!-- Settings and Start Game Buttons -->
+            <!-- Settings and Map Buttons -->
             <LinearLayout
                 android:layout_marginTop="12dp"
                 android:gravity="center"
@@ -119,12 +119,31 @@
                     app:iconGravity="textStart" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStartGame"
-                    android:text="Start Game"
+                    android:id="@+id/btnMap"
+                    android:text="Map"
                     android:layout_marginStart="8dp"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    app:backgroundTint="?attr/colorSecondary"
+                    android:textColor="?attr/colorOnSecondary"
+                    app:icon="@android:drawable/ic_dialog_map"
+                    app:iconGravity="textStart" />
+            </LinearLayout>
+
+            <!-- Start Game Button -->
+            <LinearLayout
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStartGame"
+                    android:text="Start Game"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     app:backgroundTint="?attr/colorError"
                     android:textColor="?attr/colorOnError"
                     app:icon="@android:drawable/ic_media_play"

@@ -63,13 +63,22 @@ class CountdownActivity : ComponentActivity() {
                         putExtra("userId", userId)
                         putExtra("roomCode", roomCode)
                         putExtra("baseUrl", baseUrl)
-                        putExtra("timerMinutes", timerMinutes )
+                        putExtra("timerMinutes", timerMinutes)
                         putExtra("hunterRange", hunterRange)
-                        putExtra("abilityMode", abilityMode )
+                        putExtra("abilityMode", abilityMode)
                     }
                     startActivity(intent)
                 } else {
-                    finish()
+                    val intent = Intent(this@CountdownActivity, RunnerGameActivity::class.java).apply {
+                        putExtra("userId", userId)
+                        putExtra("roomCode", roomCode)
+                        putExtra("baseUrl", baseUrl)
+                        putExtra("timerMinutes", timerMinutes)
+                        putExtra("runnerRange", runnerRange)
+                        putExtra("abilityMode", abilityMode)
+                        putExtra("hunterId", hunterId)
+                    }
+                    startActivity(intent)
                 }
                 finish()
             }

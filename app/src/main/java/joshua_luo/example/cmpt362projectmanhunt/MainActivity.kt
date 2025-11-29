@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var btnJoinLobby: Button
     private lateinit var btnLeave: Button
     private lateinit var btnSettings: Button
+    private lateinit var btnMap: Button
     private lateinit var btnStartGame: Button
     private lateinit var tvRoom: TextView
     private lateinit var tvUser: TextView
@@ -67,6 +68,7 @@ class MainActivity : ComponentActivity() {
         btnJoinLobby = findViewById(R.id.btnJoinLobby)
         btnLeave = findViewById(R.id.btnLeave)
         btnSettings = findViewById(R.id.btnSettings)
+        btnMap = findViewById(R.id.btnMap)
         btnStartGame = findViewById(R.id.btnStartGame)
         tvRoom = findViewById(R.id.tvRoom)
         tvUser = findViewById(R.id.tvUser)
@@ -111,6 +113,11 @@ class MainActivity : ComponentActivity() {
 
         btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        btnMap.setOnClickListener {
+            // TODO: map boundary setting functionality
+            Toast.makeText(this, "Map boundary setting", Toast.LENGTH_SHORT).show()
         }
 
         btnStartGame.setOnClickListener {
