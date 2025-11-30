@@ -39,6 +39,10 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
         private const val PREF_ROLE = "role"
         private const val PREF_HEALTH = "health"
         private const val PREF_ROOM_STATE_JSON = "room_state_json"
+        private const val PREF_PLAYER_LOCATIONS = "player_locations_json"
+        private const val PREF_PLAYER_ABILITIES = "player_abilities_json"
+        private const val PREF_ROOM_SETTINGS_JSON = "room_settings_json"
+        private const val PREF_PENDING_ABILITY_ID = "pending_ability_id"
         private const val PREF_SYNC_ENABLED = "sync_enabled"
     }
 
@@ -51,8 +55,11 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
     private lateinit var btnStartLobby: Button
     private lateinit var btnJoinLobby: Button
     private lateinit var btnLeave: Button
+    private lateinit var btnTestAbility: Button
+    private lateinit var btnTestSettings: Button
     private lateinit var tvRoom: TextView
     private lateinit var tvUser: TextView
+    private lateinit var tvSettings: TextView
     private lateinit var rv: RecyclerView
     private val adapter = MembersAdapter()
 
@@ -72,8 +79,11 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
         btnStartLobby = findViewById(R.id.btnStartLobby)
         btnJoinLobby = findViewById(R.id.btnJoinLobby)
         btnLeave = findViewById(R.id.btnLeave)
+        btnTestAbility = findViewById(R.id.btnTestAbility)
+        btnTestSettings = findViewById(R.id.btnTestSettings)
         tvRoom = findViewById(R.id.tvRoom)
         tvUser = findViewById(R.id.tvUser)
+        tvSettings = findViewById(R.id.tvSettings)
         rv = findViewById(R.id.rvMembers)
 
         rv.layoutManager = LinearLayoutManager(this)
@@ -91,6 +101,7 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
         restoreUiFromPrefs()
         renderStatus()
         renderMembersFromPrefs()
+        renderSettingsFromPrefs()
 
         btnStartLobby.setOnClickListener {
             permReq.launch(
@@ -134,6 +145,14 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
             }
         }
 
+        btnTestAbility.setOnClickListener {
+            triggerAbility("scan_test")
+        }
+
+        btnTestSettings.setOnClickListener {
+            toggleGameStartSetting()
+        }
+
         val roomCode = prefs.getString(PREF_ROOM_CODE, null)
         val syncEnabled = prefs.getBoolean(PREF_SYNC_ENABLED, false)
         if (!roomCode.isNullOrBlank() && syncEnabled) {
@@ -167,49 +186,79 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
             val list = ArrayList<Member>()
             for (i in 0 until arr.length()) {
                 val m = arr.getJSONObject(i)
-                val id = m.optString("userId")
+                val userId = m.optString("userId")
                 val name = m.optString("name", "")
                 val updatedAt = m.optLong("updatedAt", 0L)
+
                 val locObj = m.optJSONObject("loc")
                 val loc = if (locObj != null) {
                     MemberLoc(
-                        locObj.optDouble("lat"),
-                        locObj.optDouble("lon"),
-                        locObj.optLong("ts", 0L)
+                        lat = locObj.optDouble("lat"),
+                        lon = locObj.optDouble("lon"),
+                        ts = locObj.optLong("ts", 0L)
                     )
                 } else {
                     null
                 }
+
                 val abilitiesArr = m.optJSONArray("abilities") ?: JSONArray()
                 val abilities = ArrayList<MemberAbility>()
                 for (j in 0 until abilitiesArr.length()) {
                     val a = abilitiesArr.getJSONObject(j)
                     abilities += MemberAbility(
-                        a.optString("id"),
-                        a.optLong("ts", 0L)
+                        id = a.optString("id"),
+                        ts = a.optLong("ts", 0L)
                     )
                 }
+
                 val statusObj = m.optJSONObject("status")
                 val status = if (statusObj != null) {
                     MemberStatus(
-                        statusObj.optString("team", null),
-                        statusObj.optString("role", null),
-                        if (statusObj.has("health")) statusObj.optInt("health") else null
+                        team = statusObj.optString("team", null),
+                        role = statusObj.optString("role", null),
+                        health = if (statusObj.has("health")) statusObj.optInt("health") else null
                     )
                 } else {
                     null
                 }
+
                 list += Member(
-                    id,
-                    name.ifBlank { null },
-                    loc,
-                    updatedAt,
-                    abilities,
-                    status
+                    userId = userId,
+                    name = name.ifBlank { null },
+                    loc = loc,
+                    updatedAt = updatedAt,
+                    abilities = abilities,
+                    status = status
                 )
             }
             adapter.submitList(list)
         } catch (_: Exception) {
+        }
+    }
+
+    private fun renderSettingsFromPrefs() {
+        val raw = prefs.getString(PREF_ROOM_SETTINGS_JSON, null)
+        if (raw.isNullOrBlank()) {
+            tvSettings.text = "Settings: -"
+            return
+        }
+        try {
+            val root = JSONObject(raw)
+            val arr = root.optJSONArray("settings") ?: JSONArray()
+            if (arr.length() == 0) {
+                tvSettings.text = "Settings: -"
+                return
+            }
+            val lines = ArrayList<String>()
+            for (i in 0 until arr.length()) {
+                val s = arr.getJSONObject(i)
+                val key = s.optString("key")
+                val value = s.optString("value")
+                lines += "$key = $value"
+            }
+            tvSettings.text = lines.joinToString("\n")
+        } catch (_: Exception) {
+            tvSettings.text = "Settings: (invalid JSON)"
         }
     }
 
@@ -315,6 +364,10 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
             .remove(PREF_TOKEN)
             .putBoolean(PREF_SYNC_ENABLED, false)
             .remove(PREF_ROOM_STATE_JSON)
+            .remove(PREF_PLAYER_LOCATIONS)
+            .remove(PREF_PLAYER_ABILITIES)
+            .remove(PREF_ROOM_SETTINGS_JSON)
+            .remove(PREF_PENDING_ABILITY_ID)
             .apply()
     }
 
@@ -330,12 +383,14 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == null) return
-
         if (key == PREF_ROOM_STATE_JSON) {
             renderMembersFromPrefs()
         }
         if (key == PREF_ROOM_CODE || key == PREF_USER_ID) {
             renderStatus()
+        }
+        if (key == PREF_ROOM_SETTINGS_JSON) {
+            renderSettingsFromPrefs()
         }
     }
 
@@ -347,5 +402,87 @@ class MainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceCh
         if (health != null) {
             prefs.edit().putInt(PREF_HEALTH, health).apply()
         }
+    }
+
+    fun triggerAbility(abilityId: String) {
+        prefs.edit()
+            .putString(PREF_PENDING_ABILITY_ID, abilityId)
+            .apply()
+    }
+
+    fun updateRoomSettings(settings: JSONObject) {
+        prefs.edit()
+            .putString(PREF_ROOM_SETTINGS_JSON, settings.toString())
+            .apply()
+    }
+
+    private fun toggleGameStartSetting() {
+        val current = prefs.getString(PREF_ROOM_SETTINGS_JSON, null)
+        val settingsArr = if (current.isNullOrBlank()) {
+            JSONArray()
+        } else {
+            try {
+                val root = JSONObject(current)
+                root.optJSONArray("settings") ?: JSONArray()
+            } catch (e: Exception) {
+                JSONArray()
+            }
+        }
+
+        var gameStartObj: JSONObject? = null
+        for (i in 0 until settingsArr.length()) {
+            val s = settingsArr.getJSONObject(i)
+            if (s.optString("key") == "gameStart") {
+                gameStartObj = s
+                break
+            }
+        }
+
+        if (gameStartObj == null) {
+            gameStartObj = JSONObject()
+                .put("key", "gameStart")
+                .put("value", "on")
+            settingsArr.put(gameStartObj)
+        } else {
+            val currentValue = gameStartObj.optString("value", "off")
+            val next = if (currentValue == "on") "off" else "on"
+            gameStartObj.put("value", next)
+        }
+
+        var abilitiesObj: JSONObject? = null
+        for (i in 0 until settingsArr.length()) {
+            val s = settingsArr.getJSONObject(i)
+            if (s.optString("key") == "abilities") {
+                abilitiesObj = s
+                break
+            }
+        }
+        if (abilitiesObj == null) {
+            settingsArr.put(
+                JSONObject()
+                    .put("key", "abilities")
+                    .put("value", "on")
+            )
+        }
+
+        var fogObj: JSONObject? = null
+        for (i in 0 until settingsArr.length()) {
+            val s = settingsArr.getJSONObject(i)
+            if (s.optString("key") == "fog") {
+                fogObj = s
+                break
+            }
+        }
+        if (fogObj == null) {
+            settingsArr.put(
+                JSONObject()
+                    .put("key", "fog")
+                    .put("value", "off")
+            )
+        }
+
+        val root = JSONObject().put("settings", settingsArr)
+        updateRoomSettings(root)
+        renderSettingsFromPrefs()
     }
 }
