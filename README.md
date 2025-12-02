@@ -1,24 +1,22 @@
-# CMPT 362 — Manhunt (Android Game)
-
-Manhunt is a real-world, location-based tag game played outdoors with your phone. Players become **Hunters** or **Runners** and move around in the real world while watching a live map on their screens.
+# Manhunt (Android Game)
 
 ---
 
-## 🧩 What Is Manhunt?
+## What Is Manhunt?
 
-Think of it as **real-life tag + maps + special abilities**:
+Manhunt is a real-world, location-based tag game played outdoors with your phone. Players become **Hunters** or **Runners** and move around in the real world while watching a live map on their screens.
 
-- 📍 You see yourself on a map using GPS
-- 🧑‍🦯 You physically move around in the real world
-- 🕵️ The Hunter chases and tries to “catch” the Runners
-- 🏃 The Runners try to survive until the timer ends
-- ✨ Both sides can use abilities to help them chase or escape
+- You see yourself on a map using GPS
+- You physically move around in the real world
+- The Hunter chases and tries to “catch” the Runners
+- The Runners try to survive until the timer ends
+- Both sides can use abilities to help them chase or escape
 
 You’ll want at least **2 players** (1 Hunter, 1 Runner), but it’s more fun with a group.
 
 ---
 
-## ✨ Main Features
+## Main Features
 
 - **Lobby system** — one person hosts, others join with a room code
 - **Live map** — everyone's positions update on a shared map
@@ -36,7 +34,7 @@ You’ll want at least **2 players** (1 Hunter, 1 Runner), but it’s more fun w
 
 ---
 
-## 🧰 What You Need
+## What You Need
 
 To run the game yourself, you’ll need:
 
@@ -48,7 +46,7 @@ To run the game yourself, you’ll need:
 
 ---
 
-## 📦 Getting the App Running
+## Getting the App Running
 
 ### 1️⃣ Download the Project APK/repo
 - Install the app on any Android phone. The app will appear like any regular app.
@@ -108,7 +106,7 @@ Everyone should now see the **Manhunt app icon**.
 
 ---
 
-# 🕹️ How to Host & Play a Game
+# How to Host & Play a Game
 
 ## Step 1 — Host Creates a Lobby
 
@@ -179,7 +177,7 @@ No extra tapping required.
 
 ---
 
-# 🎯 What You See In-Game
+# What You See In-Game
 
 ## Hunter Screen
 
@@ -206,7 +204,7 @@ You’ll see:
 
 ---
 
-# 🧙 Abilities (High-Level)
+# Abilities (High-Level)
 
 Abilities add strategy and unpredictability.
 
@@ -232,7 +230,7 @@ Abilities:
 
 ---
 
-# 🧵 What Happens When You’re Caught?
+# What Happens When You’re Caught?
 
 When a Runner gets tagged in real life:
 
@@ -247,7 +245,7 @@ When a Runner gets tagged in real life:
 
 ---
 
-# 🧪 Tips for a Smooth Game
+# Tips for a Smooth Game
 
 Play in an **open, safe area** (campus, park, field).
 
@@ -263,16 +261,16 @@ Ensure:
 
 # 🛠️ Troubleshooting
 
-### 🔴 Map is blank / grey
+### Map is blank / grey
 - Google Maps API key may be missing or invalid
 - Make sure your device has internet
 
-### 🔴 Players don’t appear
+### Players don’t appear
 - Confirm **same Base URL**
 - Confirm **same Room Code**
 - Check internet + GPS permissions
 
-### 🔴 Location doesn’t update
+### Location doesn’t update
 - Check Android location permissions
 - Turn on **High Accuracy** mode
 
