@@ -27,8 +27,8 @@
         android:theme="@style/Theme.Cmpt362ProjectManhunt">
 
         <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDZeH1ETVQIPbFl6u1eMf1unGcjwcU44P8" />
+            android:name = "com.google.android.geo.API_KEY"
+            android:value = "your-google-api" />
 
         <!-- New launcher activity (Home screen) -->
         <activity
@@ -87,6 +87,27 @@
         <!-- Hunter Game Page -->
         <activity
             android:name=".HunterGameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Runner Game Page -->
+        <activity
+            android:name=".RunnerGameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Caught/Death Page -->
+        <activity
+            android:name=".CaughtActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Game End Summary Page -->
+        <activity
+            android:name=".GameEndActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />

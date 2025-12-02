@@ -53,6 +53,7 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     private var selectedAbilityIndex: Int = -1
 
+    private var selectedAbility: Int = -1 // -1 means no selection, 0-2 for ability1-3
     private var userId: String? = null
     private var token: String? = null
     private var roomCode: String? = null
@@ -103,6 +104,7 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        // Set up caught button click listener
         btnCaught.setOnClickListener {
             if (runnerViewModel.consumeShieldIfActive()) {
                 Toast.makeText(this, "Shield absorbed the tag!", Toast.LENGTH_SHORT).show()
@@ -113,6 +115,7 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
             }
         }
 
+        // Set up ability button click listener
         abilityButton.setOnClickListener {
             if (!abilityMode) {
                 Toast.makeText(this, "Abilities are disabled for this match.", Toast.LENGTH_SHORT).show()
@@ -145,6 +148,8 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
             override fun onFinish() {
                 tvGameTimer.text = "0min 0sec"
                 Toast.makeText(this@RunnerGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
+
+                // Redirect to Game End Summary page
                 val intent = Intent(this@RunnerGameActivity, GameEndActivity::class.java)
                 intent.putExtra("finalTime", "0min 0sec")
                 intent.putExtra("isHunter", false)
@@ -307,6 +312,17 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
         }
     }
 
+    // reference https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371000.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2) * sin(dLat / 2) + cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
+    }
+
     private fun showAbilityDialog() {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -386,17 +402,6 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     private val PowerupTypes.id: String
         get() = this.id
-
-    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371000.0
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2) * sin(dLat / 2) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
-    }
 
     override fun onDestroy() {
         super.onDestroy()

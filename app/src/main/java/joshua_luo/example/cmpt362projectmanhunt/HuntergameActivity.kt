@@ -45,7 +45,6 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
     private var hunterMarker: Marker? = null
     private var hunterCircle: Circle? = null
     private val runnerMarkers = mutableMapOf<String, Marker>()
-
     private lateinit var tvGameTimer: TextView
     private lateinit var abilityButton: Button
 
@@ -85,6 +84,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         hunterRange = intent.getIntExtra("hunterRange", 50)
         abilityMode = intent.getBooleanExtra("abilityMode", false)
 
+
         val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
         token = prefs.getString("token", null)
 
@@ -123,6 +123,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
+
         try {
             googleMap?.isMyLocationEnabled = true
         } catch (_: SecurityException) { }
@@ -142,6 +143,12 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
             override fun onFinish() {
                 tvGameTimer.text = "0min 0sec"
                 Toast.makeText(this@HunterGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
+
+                // Redirect to Game End Summary page
+                val intent = Intent(this@HunterGameActivity, GameEndActivity::class.java)
+                intent.putExtra("finalTime", "0min 0sec")
+                intent.putExtra("isHunter", true)
+                startActivity(intent)
                 finish()
             }
         }.start()
@@ -200,6 +207,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                     .title("You (Hunter)")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
             )
+
             hunterCircle = googleMap?.addCircle(
                 CircleOptions()
                     .center(position)
@@ -208,6 +216,8 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                     .strokeWidth(3f)
                     .fillColor(Color.argb(50, 255, 0, 0))
             )
+
+
             googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         } else {
             hunterMarker?.position = position
@@ -235,6 +245,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                         if (resp.isSuccessful) {
                             val obj = JSONObject(txt)
                             val arr = obj.optJSONArray("members") ?: JSONArray()
+
                             withContext(Dispatchers.Main) {
                                 updateRunnerMarkers(arr)
                             }
@@ -271,6 +282,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         for (i in 0 until membersArray.length()) {
             val m = membersArray.getJSONObject(i)
             val id = m.optString("userId")
+
             if (id == userId) continue
 
             val locObj = m.optJSONObject("loc") ?: continue
@@ -425,7 +437,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         val a = sin(dLat / 2) * sin(dLat / 2) +
                 cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
                 sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a ))
         return R * c
     }
 

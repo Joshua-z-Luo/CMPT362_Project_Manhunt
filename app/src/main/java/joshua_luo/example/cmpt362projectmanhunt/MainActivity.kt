@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var btnJoinLobby: Button
     private lateinit var btnLeave: Button
     private lateinit var btnSettings: Button
+    private lateinit var btnMap: Button
     private lateinit var btnStartGame: Button
     private lateinit var tvRoom: TextView
     private lateinit var tvUser: TextView
@@ -82,6 +83,7 @@ class MainActivity : ComponentActivity() {
         btnJoinLobby = findViewById(R.id.btnJoinLobby)
         btnLeave = findViewById(R.id.btnLeave)
         btnSettings = findViewById(R.id.btnSettings)
+        btnMap = findViewById(R.id.btnMap)
         btnStartGame = findViewById(R.id.btnStartGame)
         tvRoom = findViewById(R.id.tvRoom)
         tvUser = findViewById(R.id.tvUser)
@@ -156,6 +158,11 @@ class MainActivity : ComponentActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        btnMap.setOnClickListener {
+            // TODO: map boundary setting functionality
+            Toast.makeText(this, "Map boundary setting", Toast.LENGTH_SHORT).show()
+        }
+
         btnStartGame.setOnClickListener {
             startGame()
         }
@@ -177,8 +184,10 @@ class MainActivity : ComponentActivity() {
     private fun updateSettingsDisplay() {
         val prefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
 
+        // Hunter Selection
         tvHunterSelection.text = "Random"
 
+        // Hunter's Range
         val hunterRange = prefs.getString("hunterRange", "50")?.toIntOrNull() ?: 50
         tvHunterRange.text = if (hunterRange >= 1000) {
             "${hunterRange / 1000}km"
@@ -186,6 +195,7 @@ class MainActivity : ComponentActivity() {
             "${hunterRange}m"
         }
 
+        //Runner's Range
         val runnerRange = prefs.getString("runnerRange", "100")?.toIntOrNull() ?: 100
         tvRunnerRange.text = if (runnerRange >= 1000) {
             "${runnerRange / 1000}km"
@@ -193,9 +203,11 @@ class MainActivity : ComponentActivity() {
             "${runnerRange}m"
         }
 
+        // Ability Mode
         val abilityMode = prefs.getInt("abilityMode", 0)
         tvAbilityMode.text = if (abilityMode == 1) "On" else "Off"
 
+        // Timer
         val timerMinutes = SettingsActivity.getTimerMinutes(this)
         tvTimer.text = "$timerMinutes Min"
     }
@@ -220,8 +232,7 @@ class MainActivity : ComponentActivity() {
                         displayName = name
                     )
                 }
-            } catch (_: Exception) {
-            }
+            } catch (_: Exception) { }
         }
     }
 
@@ -244,8 +255,7 @@ class MainActivity : ComponentActivity() {
                         displayName = name
                     )
                 }
-            } catch (_: Exception) {
-            }
+            } catch (_: Exception) { }
         }
     }
 
@@ -293,8 +303,7 @@ class MainActivity : ComponentActivity() {
                     .post(body.toRequestBody("application/json".toMediaType()))
                     .build()
                 client.newCall(req).execute().close()
-            } catch (_: Exception) {
-            }
+            } catch (_: Exception) { }
             withContext(Dispatchers.Main) {
                 stopSync()
                 currentRoom = null
@@ -323,6 +332,7 @@ class MainActivity : ComponentActivity() {
         val runnerRange = SettingsActivity.getRunnerRange(this)
         val abilityMode = SettingsActivity.isAbilityModeEnabled(this)
 
+        //randomly select hunter
         val randomHunter = members.random()
 
         val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
@@ -369,8 +379,7 @@ class MainActivity : ComponentActivity() {
                             .post(body.toRequestBody("application/json".toMediaType()))
                             .build()
                         client.newCall(r).execute().close()
-                    } catch (_: Exception) {
-                    }
+                    } catch (_: Exception) { }
                 }
             }
         }
@@ -407,8 +416,7 @@ class MainActivity : ComponentActivity() {
                             withContext(Dispatchers.Main) { adapter.submitList(list) }
                         }
                     }
-                } catch (_: Exception) {
-                }
+                } catch (_: Exception) { }
                 delay(3000L)
             }
         }
