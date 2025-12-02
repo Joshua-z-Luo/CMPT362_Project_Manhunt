@@ -2,9 +2,13 @@ package joshua_luo.example.cmpt362projectmanhunt
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 
 class GameEndActivity : ComponentActivity() {
 
@@ -23,6 +27,9 @@ class GameEndActivity : ComponentActivity() {
         val finalTime = intent.getStringExtra("finalTime" ) ?: "0min 0sec"
         val distanceMeters = intent.getDoubleExtra("distanceMeters", 0.0)
         val isDead = intent.getBooleanExtra("isDead", false)
+        val role = intent.getStringExtra("role") ?: "Runner"
+
+        Log.d("role", role)
 
         tvFinalTime.text = finalTime
 
@@ -36,13 +43,41 @@ class GameEndActivity : ComponentActivity() {
             finish()
         }
 
-        if (isDead) {
+        val db = AppDatabase.getInstance(this)
+        val dao = db.statsDao()
+        val repo = StatsRepository(dao, OkHttpClient(), "https://example.com")
+
+        lifecycleScope.launch {
+            saveGameToHistory(repo, distanceMeters, isDead, role)
         }
+
     }
     override fun onBackPressed() {
         val isDead = intent.getBooleanExtra("isDead" , false)
         if (!isDead) {
             super.onBackPressed()
         }
+    }
+
+    private suspend fun saveGameToHistory(
+        repo: StatsRepository,
+        distanceMeters: Double,
+        isDead: Boolean,
+        role: String
+    ) {
+        val result = if (isDead) "Loss" else "Win"
+
+        val record = GameHistoryEntity(
+            finishedAt = System.currentTimeMillis(),
+            role = role,
+            result = result,
+            distanceMeters = distanceMeters.toLong(),
+            timeHiddenMs = 0,
+            timeAsHunterMs = 0,
+            tagsDone = 0,
+            tagsReceived = 0
+        )
+
+        repo.recordGame(record)
     }
 }

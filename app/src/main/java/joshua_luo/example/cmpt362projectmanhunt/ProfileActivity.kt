@@ -133,9 +133,12 @@ class ProfileActivity : AppCompatActivity() {
     private fun updateHistoryUi() {
         viewModel.gameHistory.observe(this) { history ->
             val mapped = history.map { game ->
+
+                val winnerRole = getWinningRole(game.role, game.result)
+
                 MatchHistoryItem(
                     gameId = game.id.toString(),
-                    winner = game.result,
+                    winner = winnerRole,
                     role = game.role,
                     duration = game.timeHiddenMs / 1000.0
                 )
@@ -144,6 +147,15 @@ class ProfileActivity : AppCompatActivity() {
             historyAdapter.update(mapped)
         }
     }
+
+    private fun getWinningRole(playerRole: String, result: String): String {
+        return if (result.equals("win", ignoreCase = true)) {
+            playerRole       // player won
+        } else {
+            if (playerRole.equals("Runner", ignoreCase = true)) "Hunter" else "Runner"
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         updateUI()
