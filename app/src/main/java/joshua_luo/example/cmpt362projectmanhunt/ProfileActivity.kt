@@ -24,8 +24,6 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var matchHistory: RecyclerView
     private lateinit var editProfileBtn: Button
     private lateinit var exitBtn: Button
-    private lateinit var statsSummary: TextView
-    private lateinit var simulateGameBtn: Button
 
     private lateinit var db: AppDatabase
     private lateinit var statsDao: StatsDao
@@ -35,22 +33,23 @@ class ProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
+        // --- View binding ---
         profilePhoto = findViewById(R.id.profile_photo)
         username = findViewById(R.id.username)
         achievements = findViewById(R.id.achievement_recycler)
         matchHistory = findViewById(R.id.match_history_recycler)
         editProfileBtn = findViewById(R.id.edit_profile)
         exitBtn = findViewById(R.id.exit_profile)
-        // Todo: (add summary section to profile ui) statsSummary = findViewById(R.id.stats_summary)
 
-        // DB + repo setup (fake baseUrl for now)
+        // --- DB + repository setup ---
         db = AppDatabase.getInstance(this)
         statsDao = db.statsDao()
         val client = OkHttpClient()
+        // needed in StatsRepository
         val fakeBaseUrl = "https://example.com"
         statsRepository = StatsRepository(statsDao, client, fakeBaseUrl)
 
-        // Profile Photo
+        // --- Profile photo from file (if exists) ---
         val profileImgFile = File(getExternalFilesDir(null), "profile_photo.jpg")
         if (profileImgFile.exists()) {
             val imgUri = FileProvider.getUriForFile(
@@ -62,15 +61,15 @@ class ProfileActivity : AppCompatActivity() {
             profilePhoto.setImageBitmap(bitmap)
         }
 
-        // Username
+        // --- Username from ProfilePrefs ---
         val profilePrefs = getSharedPreferences("ProfilePrefs", MODE_PRIVATE)
         val name = profilePrefs.getString("username_key", "")
         username.text = String.format("Username: %s", name)
 
-        // Achievements list (we'll fill dynamically)
+        // --- RecyclerViews layout managers ---
         achievements.layoutManager = LinearLayoutManager(this)
 
-        // Match history – keep dummy data for now
+        // Match history (dummy data for now)
         val matchList = listOf(
             MatchHistoryItem("Game001", "Runner", "Runner", 12.5),
             MatchHistoryItem("Game002", "Hunter", "Hunter", 8.3)
@@ -78,39 +77,17 @@ class ProfileActivity : AppCompatActivity() {
         matchHistory.layoutManager = LinearLayoutManager(this)
         matchHistory.adapter = HistoryAdapter(matchList)
 
-        simulateGameBtn.setOnClickListener {
-            simulateGameAndRefresh()
-        }
-
+        // --- Buttons ---
         editProfileBtn.setOnClickListener {
             startActivity(Intent(this, ProfileSettingActivity::class.java))
         }
+
         exitBtn.setOnClickListener {
             finish()
         }
 
+        // Load achievements & stats from DB
         updateAchievementsAndStatsUi()
-    }
-
-    private fun simulateGameAndRefresh() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            // Fake game result for demo
-            val randomWin = (0..1).random() == 0
-            val fakeGame = GameHistoryEntity(
-                finishedAt = System.currentTimeMillis(),
-                role = "Runner",
-                result = if (randomWin) "Win" else "Loss",
-                distanceMeters = 1000L,
-                timeHiddenMs = 60_000L,
-                timeAsHunterMs = 0L,
-                tagsDone = 1,
-                tagsReceived = 0
-            )
-            statsRepository.recordGame(fakeGame)
-            withContext(Dispatchers.Main) {
-                updateAchievementsAndStatsUi()
-            }
-        }
     }
 
     private fun updateAchievementsAndStatsUi() {
@@ -124,8 +101,6 @@ class ProfileActivity : AppCompatActivity() {
             if (stats.totalTagsDone >= 10) achievementStrings += "Hunter Elite: 10 tags"
 
             withContext(Dispatchers.Main) {
-               // statsSummary.text = "Games: ${stats.totalGames} • Wins: ${stats.totalWins} • Distance: ${stats.totalDistanceMeters}m"
-
                 achievements.adapter = AchievementAdapter(achievementStrings)
             }
         }

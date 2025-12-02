@@ -7,13 +7,14 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -26,8 +27,8 @@
         android:theme="@style/Theme.Cmpt362ProjectManhunt">
 
         <meta-data
-            android:name = "com.google.android.geo.API_KEY"
-            android:value = "AIzaSyDZeH1ETVQIPbFl6u1eMf1unGcjwcU44P8" />
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDZeH1ETVQIPbFl6u1eMf1unGcjwcU44P8" />
 
         <!-- New launcher activity (Home screen) -->
         <activity
@@ -53,7 +54,7 @@
             android:name=".ProfileActivity"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Cmpt362ProjectManhunt"/>
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
 
         <!-- Profile Settings -->
         <activity
@@ -90,6 +91,7 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
 
+        <!-- Foreground sync service for location + room state -->
         <service
             android:name=".SyncService"
             android:exported="false"
