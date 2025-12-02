@@ -66,6 +66,7 @@ class ProfileActivity : AppCompatActivity() {
 
         // --- Profile photo from file (if exists) ---
         val profileImgFile = File(getExternalFilesDir(null), "profile_photo.jpg")
+
         if (profileImgFile.exists()) {
             val imgUri = FileProvider.getUriForFile(
                 this,
@@ -74,6 +75,8 @@ class ProfileActivity : AppCompatActivity() {
             )
             val bitmap = Util.getBitmap(this, imgUri)
             profilePhoto.setImageBitmap(bitmap)
+        } else {
+            profilePhoto.setImageResource(R.drawable.default_profile)
         }
 
         // --- Username from ProfilePrefs ---
