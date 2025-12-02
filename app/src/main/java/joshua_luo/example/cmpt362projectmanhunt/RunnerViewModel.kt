@@ -4,128 +4,109 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import joshua_luo.example.cmpt362projectmanhunt.model.Ability
+import com.google.android.gms.maps.model.LatLng
 import joshua_luo.example.cmpt362projectmanhunt.model.PowerupTypes
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
-/**
- * RunnerViewModel focuses on the runner’s point of view.
- *
- * It manages:
- *  - which ability the runner currently has
- *  - whether the ability is active or on cooldown
- *  - the remaining time until the ability expires
- *
- * The View (Runner's screen) just observes the LiveData
- * and calls useAbility() when the button is tapped.
- */
 class RunnerViewModel : ViewModel() {
 
-    private val _currentAbility = MutableLiveData<Ability?>(null)
-    val currentAbility: LiveData<Ability?> = _currentAbility
+    private val _invisibleActive = MutableLiveData(false)
+    val invisibleActive: LiveData<Boolean> = _invisibleActive
 
-    private val _isAbilityActive = MutableLiveData(false)
-    val isAbilityActive: LiveData<Boolean> = _isAbilityActive
+    private val _hiddenRadiusFactor = MutableLiveData(1.0f)
+    val hiddenRadiusFactor: LiveData<Float> = _hiddenRadiusFactor
 
-    private val _isAbilityOnCooldown = MutableLiveData(false)
-    val isOnCooldown: LiveData<Boolean> = _isAbilityOnCooldown
+    private val _stationaryActive = MutableLiveData(false)
+    val stationaryActive: LiveData<Boolean> = _stationaryActive
 
-    private val _remainingDurationMillis = MutableLiveData(0L)
-    val remainingDurationMillis: LiveData<Long> = _remainingDurationMillis
+    private val _shieldCharges = MutableLiveData(0)
+    val shieldCharges: LiveData<Int> = _shieldCharges
 
-    private var timerJob: Job? = null
+    private var invisJob: Job? = null
+    private var hiddenJob: Job? = null
+    private var stationaryJob: Job? = null
 
-    /**
-     * Give the runner a new ability.
-     */
-    fun grantAbility(type: PowerupTypes, durationMs: Long, cooldownMs: Long) {
-        _currentAbility.value = Ability(
-            id = System.currentTimeMillis(),
-            type = type,
-            location = null,
-            isActive = false,
-            durationMillis = durationMs,
-            cooldownMillis = cooldownMs,
-            appliedToPlayerId = null,
-            timeUsedMillis = null
-        )
-        _isAbilityActive.value = false
-        _isAbilityOnCooldown.value = false
-        _remainingDurationMillis.value = 0L
-    }
+    private var lastPosition: LatLng? = null
+    private var lastMoveTimestamp: Long = System.currentTimeMillis()
 
-    /**
-     * Called when the runner taps "Use Ability".
-     */
-    fun useAbility() {
-        val ability = _currentAbility.value ?: return
-
-        // Ignore if already active, on cooldown, or no real ability
-        if (_isAbilityActive.value == true ||
-            _isAbilityOnCooldown.value == true ||
-            ability.type == PowerupTypes.None
-        ) return
-
-        _isAbilityActive.value = true
-        _currentAbility.value = ability.copy(
-            isActive = true,
-            timeUsedMillis = System.currentTimeMillis()
-        )
-
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            val duration = ability.durationMillis
-            if (duration > 0L) {
-                val start = System.currentTimeMillis()
-                while (true) {
-                    val elapsed = System.currentTimeMillis() - start
-                    val remaining = duration - elapsed
-                    if (remaining <= 0L) break
-                    _remainingDurationMillis.value = remaining
-                    delay(250L)
-                }
-            }
-
-            // effect ends
-            _isAbilityActive.value = false
-            _remainingDurationMillis.value = 0L
-
-            // cooldown
-            if (ability.cooldownMillis > 0L) {
-                _isAbilityOnCooldown.value = true
-                delay(ability.cooldownMillis)
-                _isAbilityOnCooldown.value = false
-            }
+    fun useAbility(type: PowerupTypes) {
+        when (type) {
+            PowerupTypes.Invisibility -> useInvisibility()
+            PowerupTypes.Hidden -> useHidden()
+            PowerupTypes.Stationary -> useStationary()
+            PowerupTypes.Shield -> useShield()
+            else -> { }
         }
     }
 
-    /**
-     * @return true if Invisibility is currently active.
-     */
-    fun isInvisibleNow(): Boolean {
-        val ability = _currentAbility.value
-        return ability?.type == PowerupTypes.Invisibility && _isAbilityActive.value == true
+    private fun useInvisibility() {
+        if (_invisibleActive.value == true) return
+        _invisibleActive.value = true
+        invisJob?.cancel()
+        invisJob = viewModelScope.launch {
+            delay(15_000L)
+            _invisibleActive.postValue(false)
+        }
     }
 
-    /**
-     * Consume Shield if it is active.
-     * @return true if the shield blocked the tag.
-     */
-    fun consumeShieldIfAvailable(): Boolean {
-        val ability = _currentAbility.value
-        val shieldActive = ability?.type == PowerupTypes.Shield && _isAbilityActive.value == true
-
-        if (shieldActive) {
-            _isAbilityActive.value = false
-            _currentAbility.value = ability.copy(
-                isActive = false,
-                durationMillis = 0L,
-                cooldownMillis = 0L
-            )
+    private fun useHidden() {
+        _hiddenRadiusFactor.value = 0.5f
+        hiddenJob?.cancel()
+        hiddenJob = viewModelScope.launch {
+            delay(10_000L)
+            _hiddenRadiusFactor.postValue(1.0f)
         }
+    }
 
-        return shieldActive
+    private fun useStationary() {
+        if (_stationaryActive.value == true) return
+        _stationaryActive.value = true
+        stationaryJob?.cancel()
+        stationaryJob = viewModelScope.launch {
+            delay(20_000L)
+            _stationaryActive.postValue(false)
+        }
+    }
+
+    private fun useShield() {
+        val current = _shieldCharges.value ?: 0
+        if (current >= 1) return
+        _shieldCharges.value = 1
+    }
+
+    fun consumeShieldIfActive(): Boolean {
+        val current = _shieldCharges.value ?: 0
+        if (current <= 0) return false
+        _shieldCharges.value = current - 1
+        return true
+    }
+
+    fun updateRunnerPosition(pos: LatLng) {
+        val last = lastPosition
+        if (last == null || distanceMeters(last, pos) > 1.0) {
+            lastPosition = pos
+            lastMoveTimestamp = System.currentTimeMillis()
+        }
+    }
+
+    private fun distanceMeters(a: LatLng, b: LatLng): Double {
+        val R = 6371000.0
+        val dLat = Math.toRadians(b.latitude - a.latitude)
+        val dLon = Math.toRadians(b.longitude - a.longitude)
+        val lat1 = Math.toRadians(a.latitude)
+        val lat2 = Math.toRadians(b.latitude)
+
+        val sinDLat = sin(dLat / 2)
+        val sinDLon = sin(dLon / 2)
+
+        val aa = sinDLat * sinDLat + cos(lat1) * cos(lat2) * sinDLon * sinDLon
+        val c = 2 * atan2(sqrt(aa), sqrt(1 - aa))
+        return R * c
     }
 }
