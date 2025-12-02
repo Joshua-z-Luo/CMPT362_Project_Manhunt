@@ -490,6 +490,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         intent.putExtra("isHunter", true)
         intent.putExtra("distanceMeters", totalDistanceMeters)
         intent.putExtra("isDead", false)
+        intent.putExtra("role", "Hunter")
         startActivity(intent)
         finish()
     }

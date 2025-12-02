@@ -49,6 +49,7 @@
                     android:layout_width="0dp"
                     android:layout_height="200dp"
                     android:layout_weight="1"
+                    android:src="@drawable/default_profile"
                     android:contentDescription="@string/profile_photo" />
 
                 <Button
@@ -56,6 +57,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
+                    android:layout_gravity="center"
                     android:text="@string/change_btn" />
             </LinearLayout>
 
@@ -76,6 +78,7 @@
                 android:background="#FFFFFF"
                 android:hint="@string/username_text"
                 android:inputType="text"
+                android:textColor="@color/black"
                 android:padding="12dp" />
 
             <!-- Notifications -->

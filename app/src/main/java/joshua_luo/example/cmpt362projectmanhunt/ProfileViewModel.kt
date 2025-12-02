@@ -18,7 +18,9 @@ import kotlinx.coroutines.launch
  */
 
 class ProfileViewModel(private val statsRepository: StatsRepository): ViewModel() {
-    val userImage = MutableLiveData<Bitmap>()
+
+    // Moved to ProfileSettingsViewModel
+    // val userImage = MutableLiveData<Bitmap>()
 
 
     private val _stats = MutableLiveData<PlayerStatsEntity>()

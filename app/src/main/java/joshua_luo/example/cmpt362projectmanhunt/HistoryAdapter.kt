@@ -7,9 +7,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 data class MatchHistoryItem(val gameId: String, val winner: String, val role: String, val duration: Double)
-class HistoryAdapter(private val items: List<MatchHistoryItem>) :
-    RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder>() {
-
+class HistoryAdapter(
+    private val items: MutableList<MatchHistoryItem> = mutableListOf()
+) : RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder>() {
     class HistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val gameIdText: TextView = itemView.findViewById(R.id.game_id)
         val winnerText: TextView = itemView.findViewById(R.id.match_winner)
@@ -26,10 +26,16 @@ class HistoryAdapter(private val items: List<MatchHistoryItem>) :
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
         val item = items[position]
         holder.gameIdText.text = item.gameId
-        holder.winnerText.text = item.winner
-        holder.roleText.text = item.role
+        holder.winnerText.text = "Winner: ${item.winner}"
+        holder.roleText.text = "Your Role: ${item.role}"
         holder.durationText.text = "${item.duration} min"
     }
 
     override fun getItemCount(): Int = items.size
+
+    fun update(newItem: List<MatchHistoryItem>) {
+        items.clear()
+        items.addAll(newItem)
+        notifyDataSetChanged()
+    }
 }

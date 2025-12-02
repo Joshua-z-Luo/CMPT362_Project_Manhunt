@@ -7,10 +7,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -28,6 +30,8 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
     private lateinit var statsDao: StatsDao
     private lateinit var statsRepository: StatsRepository
+    private lateinit var historyAdapter: HistoryAdapter
+    private lateinit var viewModel: ProfileViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +53,20 @@ class ProfileActivity : AppCompatActivity() {
         val fakeBaseUrl = "https://example.com"
         statsRepository = StatsRepository(statsDao, client, fakeBaseUrl)
 
+        // --- History adapter setup ---
+        historyAdapter = HistoryAdapter(mutableListOf())
+        matchHistory.adapter = historyAdapter
+
+        // --- ProfileViewModel ---
+        viewModel = ViewModelProvider(
+            this,
+            ProfileViewModel.Factory(statsRepository)
+        )[ProfileViewModel::class.java]
+        viewModel.load()
+
         // --- Profile photo from file (if exists) ---
         val profileImgFile = File(getExternalFilesDir(null), "profile_photo.jpg")
+
         if (profileImgFile.exists()) {
             val imgUri = FileProvider.getUriForFile(
                 this,
@@ -59,6 +75,8 @@ class ProfileActivity : AppCompatActivity() {
             )
             val bitmap = Util.getBitmap(this, imgUri)
             profilePhoto.setImageBitmap(bitmap)
+        } else {
+            profilePhoto.setImageResource(R.drawable.default_profile)
         }
 
         // --- Username from ProfilePrefs ---
@@ -67,15 +85,15 @@ class ProfileActivity : AppCompatActivity() {
         username.text = String.format("Username: %s", name)
 
         // --- RecyclerViews layout managers ---
+        // --- Achievements ---
         achievements.layoutManager = LinearLayoutManager(this)
 
         // Match history (dummy data for now)
-        val matchList = listOf(
-            MatchHistoryItem("Game001", "Runner", "Runner", 12.5),
-            MatchHistoryItem("Game002", "Hunter", "Hunter", 8.3)
-        )
+        // val matchList = listOf(
+        // MatchHistoryItem("Game001", "Runner", "Runner", 12.5),
+        // MatchHistoryItem("Game002", "Hunter", "Hunter", 8.3)
+        // )
         matchHistory.layoutManager = LinearLayoutManager(this)
-        matchHistory.adapter = HistoryAdapter(matchList)
 
         // --- Buttons ---
         editProfileBtn.setOnClickListener {
@@ -86,8 +104,15 @@ class ProfileActivity : AppCompatActivity() {
             finish()
         }
 
+        // testing
+        // insertFakeStats()
+        // insertFakeGameHistory()
+
         // Load achievements & stats from DB
         updateAchievementsAndStatsUi()
+
+        // Load history
+        updateHistoryUi()
     }
 
     private fun updateAchievementsAndStatsUi() {
@@ -105,4 +130,97 @@ class ProfileActivity : AppCompatActivity() {
             }
         }
     }
+    private fun updateHistoryUi() {
+        viewModel.gameHistory.observe(this) { history ->
+            val mapped = history.map { game ->
+
+                val winnerRole = getWinningRole(game.role, game.result)
+
+                MatchHistoryItem(
+                    gameId = game.id.toString(),
+                    winner = winnerRole,
+                    role = game.role,
+                    duration = game.timeHiddenMs / 1000.0
+                )
+            }
+
+            historyAdapter.update(mapped)
+        }
+    }
+
+    private fun getWinningRole(playerRole: String, result: String): String {
+        return if (result.equals("win", ignoreCase = true)) {
+            playerRole       // player won
+        } else {
+            if (playerRole.equals("Runner", ignoreCase = true)) "Hunter" else "Runner"
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateUI()
+    }
+
+    private fun updateUI() {
+        // Profile Photo
+        val profileImgFile = File(getExternalFilesDir(null), "profile_photo.jpg")
+        if (profileImgFile.exists()) {
+            val imgUri = FileProvider.getUriForFile(
+                this,
+                "joshua_luo.example.cmpt362projectmanhunt",
+                profileImgFile
+            )
+            val bitmap = Util.getBitmap(this, imgUri)
+            profilePhoto.setImageBitmap(bitmap)
+        }
+        // Username
+        val profilePrefs = getSharedPreferences("ProfilePrefs", MODE_PRIVATE)
+        val name = profilePrefs.getString("username_key", "")
+        username.text = String.format("Username: %s", name)
+
+    }
+
+    // Testing achievements using stats
+//    private fun insertFakeStats() {
+//        lifecycleScope.launch(Dispatchers.IO) {
+//            val fakeStats = PlayerStatsEntity(
+//                totalGames = 3,           // triggers "First Game"
+//                totalWins = 2,            // triggers "First Win"
+//                totalDistanceMeters = 6000, // triggers "Runner: 5km travelled"
+//                totalTimeHiddenMs = 15_000,
+//                totalTagsDone = 12,       // triggers "Hunter Elite: 10 tags"
+//                totalTagsReceived = 5
+//            )
+//            statsDao.insertStats(fakeStats)
+//
+//            withContext(Dispatchers.Main) {
+//                updateAchievementsAndStatsUi()
+//            }
+//        }
+//    }
+
+    // Test game history
+//    private fun insertFakeGameHistory() {
+//        lifecycleScope.launch(Dispatchers.IO) {
+//            val fakeGames = listOf(
+//                GameHistoryEntity(
+//                    finishedAt = System.currentTimeMillis(),
+//                    role = "Runner",
+//                    result = "Win",
+//                    distanceMeters = 3000,
+//                    timeHiddenMs = 5000,
+//                    timeAsHunterMs = 0,
+//                    tagsDone = 0,
+//                    tagsReceived = 1
+//                )
+//            )
+//
+//            fakeGames.forEach { statsDao.insertGame(it) }
+//
+//            withContext(Dispatchers.Main) {
+//                updateHistoryUi()
+//            }
+//        }
+//    }
+
 }
