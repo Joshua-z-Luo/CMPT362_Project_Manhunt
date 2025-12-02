@@ -80,11 +80,6 @@ class StatsRepository(
 
     /**
      * Fetch the top players for the leaderboard screen.
-     * Expected JSON format from backend:
-     * [
-     *   { "rank": 1, "name": "Alice", "totalDistanceMeters": 1234, "totalWins": 5 },
-     *   ...
-     * ]
      */
     suspend fun fetchLeaderboard(): List<LeaderboardEntry> {
         val req = Request.Builder()

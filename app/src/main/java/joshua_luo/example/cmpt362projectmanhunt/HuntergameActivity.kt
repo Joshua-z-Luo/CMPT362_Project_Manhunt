@@ -10,9 +10,9 @@ import android.view.Window
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -20,7 +20,6 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import joshua_luo.example.cmpt362projectmanhunt.model.PowerupTypes
 import kotlinx.coroutines.*
@@ -46,10 +45,9 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
     private var hunterMarker: Marker? = null
     private var hunterCircle: Circle? = null
     private val runnerMarkers = mutableMapOf<String, Marker>()
-    private var trapCircle: Circle? = null
 
     private lateinit var tvGameTimer: TextView
-    private lateinit var abilityButton: MaterialButton
+    private lateinit var abilityButton: Button
 
     private var userId: String? = null
     private var token: String? = null
@@ -62,7 +60,9 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
     private var hunterLat: Double = 0.0
     private var hunterLon: Double = 0.0
 
-    private val hunterViewModel: HunterViewModel by viewModels()
+    private lateinit var hunterViewModel: HunterViewModel
+
+    private var selectedAbility: PowerupTypes? = null
 
     private val permReq = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -75,6 +75,8 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         fused = LocationServices.getFusedLocationProviderClient(this)
         tvGameTimer = findViewById(R.id.tvGameTimer)
         abilityButton = findViewById(R.id.abilityButton)
+
+        hunterViewModel = ViewModelProvider(this)[HunterViewModel::class.java]
 
         userId = intent.getStringExtra("userId")
         roomCode = intent.getStringExtra("roomCode")
@@ -93,31 +95,37 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
             )
         )
 
-        val mapFragment =
-            supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         abilityButton.setOnClickListener {
-            if (abilityMode) {
-                showAbilityDialog()
+            if (!abilityMode) {
+                Toast.makeText(this, "Abilities are disabled for this match.", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Abilities disabled for this game", Toast.LENGTH_SHORT).show()
+                showAbilityDialog()
             }
         }
 
-        observeHunterAbilities()
+        hunterViewModel.scanRangeMultiplier.observe(this) {
+            updateHunterCircleRadius()
+        }
+
+        hunterViewModel.trackedRunnerId.observe(this) {
+            // appearance handled in updateRunnerMarkers
+        }
+
+        hunterViewModel.revealActive.observe(this) {
+            // we simply re-run visibility when next poll comes in
+        }
+
         startGameTimer()
     }
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-
         try {
             googleMap?.isMyLocationEnabled = true
-        } catch (e: SecurityException) {
-            e.printStackTrace()
-        }
-
+        } catch (_: SecurityException) { }
         startLocationTracking()
         startPollingRunners()
     }
@@ -133,11 +141,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
             override fun onFinish() {
                 tvGameTimer.text = "0min 0sec"
-                Toast.makeText(
-                    this@HunterGameActivity,
-                    "Time's up! Runners win!",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this@HunterGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
                 finish()
             }
         }.start()
@@ -146,6 +150,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun startLocationTracking() {
         val uid = userId ?: return
+        val tok = token ?: return
         val base = baseUrl ?: return
         val code = roomCode ?: return
 
@@ -159,13 +164,10 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                 hunterLat = loc.latitude
                 hunterLon = loc.longitude
 
-                val position = LatLng(hunterLat, hunterLon)
-                hunterViewModel.updateHunterPosition(position)
-                updateHunterMarker(position)
+                val pos = LatLng(hunterLat, hunterLon)
+                hunterViewModel.updateHunterPosition(pos)
+                updateHunterMarker(hunterLat, hunterLon)
 
-                if (hunterViewModel.hunterInvisibleActive.value == true) return
-
-                val tok = token ?: return
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val body = JSONObject().apply {
@@ -179,8 +181,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                             .post(body.toRequestBody("application/json".toMediaType()))
                             .build()
                         client.newCall(r).execute().close()
-                    } catch (_: Exception) {
-                    }
+                    } catch (_: Exception) { }
                 }
             }
         }
@@ -189,9 +190,8 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         fused.requestLocationUpdates(req, cb, mainLooper)
     }
 
-    private fun updateHunterMarker(position: LatLng) {
-        val rangeMultiplier = hunterViewModel.scanRangeMultiplier.value ?: 1f
-        val radius = hunterRange.toDouble() * rangeMultiplier
+    private fun updateHunterMarker(lat: Double, lon: Double) {
+        val position = LatLng(lat, lon)
 
         if (hunterMarker == null) {
             hunterMarker = googleMap?.addMarker(
@@ -200,22 +200,25 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                     .title("You (Hunter)")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
             )
-
             hunterCircle = googleMap?.addCircle(
                 CircleOptions()
                     .center(position)
-                    .radius(radius)
+                    .radius(hunterRange.toDouble())
                     .strokeColor(Color.RED)
                     .strokeWidth(3f)
                     .fillColor(Color.argb(50, 255, 0, 0))
             )
-
             googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         } else {
             hunterMarker?.position = position
             hunterCircle?.center = position
-            hunterCircle?.radius = radius
         }
+        updateHunterCircleRadius()
+    }
+
+    private fun updateHunterCircleRadius() {
+        val factor = hunterViewModel.scanRangeMultiplier.value ?: 1.0f
+        hunterCircle?.radius = hunterRange.toDouble() * factor
     }
 
     private fun startPollingRunners() {
@@ -232,136 +235,108 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                         if (resp.isSuccessful) {
                             val obj = JSONObject(txt)
                             val arr = obj.optJSONArray("members") ?: JSONArray()
-
                             withContext(Dispatchers.Main) {
                                 updateRunnerMarkers(arr)
                             }
                         }
                     }
-                } catch (_: Exception) {
-                }
+                } catch (_: Exception) { }
                 delay(3000L)
             }
         }
     }
 
+    private fun isAbilityActive(abilities: JSONArray?, id: String, durationMs: Long): Boolean {
+        if (abilities == null) return false
+        val now = System.currentTimeMillis()
+        var lastTs: Long = -1
+        for (i in 0 until abilities.length()) {
+            val a = abilities.optJSONObject(i) ?: continue
+            if (a.optString("id") == id) {
+                val ts = a.optLong("ts", 0L)
+                if (ts > lastTs) lastTs = ts
+            }
+        }
+        return lastTs > 0 && now - lastTs <= durationMs
+    }
+
     private fun updateRunnerMarkers(membersArray: JSONArray) {
         val currentRunnerIds = mutableSetOf<String>()
-        val positions = mutableMapOf<String, LatLng>()
+        val runnerPositions = mutableMapOf<String, LatLng>()
 
-        val rangeMultiplier = hunterViewModel.scanRangeMultiplier.value ?: 1f
-        val effectiveRange = hunterRange * rangeMultiplier
         val revealActive = hunterViewModel.revealActive.value == true
-        val lockOnId = hunterViewModel.lockOnRunnerId.value
         val trackedId = hunterViewModel.trackedRunnerId.value
+        val scanFactor = hunterViewModel.scanRangeMultiplier.value ?: 1.0f
 
         for (i in 0 until membersArray.length()) {
             val m = membersArray.getJSONObject(i)
             val id = m.optString("userId")
-
             if (id == userId) continue
 
             val locObj = m.optJSONObject("loc") ?: continue
             val lat = locObj.optDouble("lat")
             val lon = locObj.optDouble("lon")
-
             if (lat == 0.0 && lon == 0.0) continue
 
-            val pos = LatLng(lat, lon)
-            positions[id] = pos
-            currentRunnerIds.add(id)
+            val abilitiesArr = m.optJSONArray("abilities")
 
-            val distance = calculateDistance(hunterLat, hunterLon, lat, lon)
-            val inRange = distance <= effectiveRange
-            val keepVisible = revealActive || inRange || (lockOnId != null && id == lockOnId)
+            val invis = isAbilityActive(abilitiesArr, "invisibility", 15_000L) ||
+                    isAbilityActive(abilitiesArr, "stationary", 20_000L)
 
-            if (inRange && lockOnId == null) {
-                hunterViewModel.lockOnFirstVisibleRunner(id)
+            val hidden = isAbilityActive(abilitiesArr, "hidden", 10_000L)
+
+            val position = LatLng(lat, lon)
+            runnerPositions[id] = position
+
+            val dist = calculateDistance(hunterLat, hunterLon, lat, lon)
+
+            var effectiveRange = hunterRange.toDouble() * scanFactor
+            if (hidden) {
+                effectiveRange *= 0.5
             }
 
-            if (keepVisible) {
-                val name = m.optString("name", "").ifBlank { id }
-                val colorHue =
-                    if (id == trackedId) BitmapDescriptorFactory.HUE_YELLOW
-                    else BitmapDescriptorFactory.HUE_BLUE
+            val shouldShow =
+                (dist <= effectiveRange) || (trackedId == id) || revealActive
 
-                if (runnerMarkers.containsKey(id)) {
-                    runnerMarkers[id]?.position = pos
-                } else {
-                    val marker = googleMap?.addMarker(
-                        MarkerOptions()
-                            .position(pos)
-                            .title("Runner: $name")
-                            .icon(BitmapDescriptorFactory.defaultMarker(colorHue))
-                    )
-                    if (marker != null) {
-                        runnerMarkers[id] = marker
-                    }
-                }
-            } else {
+            if (!revealActive && invis && trackedId != id) {
+                continue
+            }
+
+            if (!shouldShow) {
                 runnerMarkers[id]?.remove()
                 runnerMarkers.remove(id)
+                continue
+            }
+
+            currentRunnerIds.add(id)
+
+            val name = m.optString("name", "").ifBlank { id }
+
+            if (runnerMarkers.containsKey(id)) {
+                runnerMarkers[id]?.position = position
+            } else {
+                val hue =
+                    if (trackedId == id) BitmapDescriptorFactory.HUE_YELLOW
+                    else BitmapDescriptorFactory.HUE_BLUE
+
+                val marker = googleMap?.addMarker(
+                    MarkerOptions()
+                        .position(position)
+                        .title("Runner: $name")
+                        .icon(BitmapDescriptorFactory.defaultMarker(hue))
+                )
+                if (marker != null) {
+                    runnerMarkers[id] = marker
+                }
             }
         }
 
-        hunterViewModel.updateRunnerPositions(positions)
-        updateTrapCircle()
+        hunterViewModel.updateRunnerPositions(runnerPositions)
 
         val toRemove = runnerMarkers.keys - currentRunnerIds
         toRemove.forEach {
             runnerMarkers[it]?.remove()
             runnerMarkers.remove(it)
-        }
-    }
-
-    private fun observeHunterAbilities() {
-        hunterViewModel.trapCenter.observe(this) {
-            updateTrapCircle()
-        }
-
-        hunterViewModel.trapTriggeredRunnerId.observe(this) { runnerId ->
-            if (!runnerId.isNullOrEmpty()) {
-                Toast.makeText(this, "Trap triggered on runner $runnerId", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        hunterViewModel.compassBearingDeg.observe(this) { bearing ->
-            if (bearing != null && hunterViewModel.compassActive.value == true) {
-                tvGameTimer.text = "Nearest runner: ${bearing.toInt()}°"
-            }
-        }
-
-        hunterViewModel.hunterInvisibleActive.observe(this) { active ->
-            if (active) {
-                Toast.makeText(this, "Hunter invisibility activated", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Hunter invisibility ended", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun updateTrapCircle() {
-        val center = hunterViewModel.trapCenter.value
-        val radius = hunterViewModel.trapRadiusMeters.value ?: 0.0
-
-        if (center == null || radius <= 0.0) {
-            trapCircle?.remove()
-            trapCircle = null
-            return
-        }
-
-        if (trapCircle == null) {
-            trapCircle = googleMap?.addCircle(
-                CircleOptions()
-                    .center(center)
-                    .radius(radius)
-                    .strokeColor(Color.MAGENTA)
-                    .strokeWidth(3f)
-                    .fillColor(Color.argb(40, 255, 0, 255))
-            )
-        } else {
-            trapCircle?.center = center
-            trapCircle?.radius = radius
         }
     }
 
@@ -377,14 +352,11 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         val card1: MaterialCardView = dialog.findViewById(R.id.cardAbility1) // Scan
         val card2: MaterialCardView = dialog.findViewById(R.id.cardAbility2) // Reveal
         val card3: MaterialCardView = dialog.findViewById(R.id.cardAbility3) // Tracker
-        val card4: MaterialCardView = dialog.findViewById(R.id.cardAbility4) // Trap
-        val card5: MaterialCardView = dialog.findViewById(R.id.cardAbility5) // Hunter Invis
-        val card6: MaterialCardView = dialog.findViewById(R.id.cardAbility6) // Lock On
-
+        val card4: MaterialCardView = dialog.findViewById(R.id.cardAbility5) // Hunter Invisibility
         val btnBack: Button = dialog.findViewById(R.id.btnBack)
         val btnUse: Button = dialog.findViewById(R.id.btnUse)
 
-        var selectedAbility = -1
+        selectedAbility = null
         btnUse.isEnabled = false
 
         fun clearStrokes() {
@@ -392,58 +364,26 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
             card2.strokeColor = Color.TRANSPARENT
             card3.strokeColor = Color.TRANSPARENT
             card4.strokeColor = Color.TRANSPARENT
-            card5.strokeColor = Color.TRANSPARENT
-            card6.strokeColor = Color.TRANSPARENT
         }
 
-        fun select(card: MaterialCardView, abilityIndex: Int) {
+        fun select(card: MaterialCardView, ability: PowerupTypes) {
             clearStrokes()
             card.strokeColor = Color.parseColor("#FF1976D2")
-            selectedAbility = abilityIndex
+            selectedAbility = ability
             btnUse.isEnabled = true
         }
 
-        card1.setOnClickListener { select(card1, 0) }
-        card2.setOnClickListener { select(card2, 1) }
-        card3.setOnClickListener { select(card3, 2) }
-        card4.setOnClickListener { select(card4, 3) }
-        card5.setOnClickListener { select(card5, 4) }
-        card6.setOnClickListener { select(card6, 5) }
+        card1.setOnClickListener { select(card1, PowerupTypes.Scan) }
+        card2.setOnClickListener { select(card2, PowerupTypes.Reveal) }
+        card3.setOnClickListener { select(card3, PowerupTypes.Tracker) }
+        card4.setOnClickListener { select(card4, PowerupTypes.HunterInvisibility) }
 
         btnBack.setOnClickListener { dialog.dismiss() }
 
         btnUse.setOnClickListener {
-            when (selectedAbility) {
-                0 -> {
-                    hunterViewModel.useAbility(PowerupTypes.Scan)
-                    sendAbilityActivation("scan")
-                    Toast.makeText(this, "Scan activated", Toast.LENGTH_SHORT).show()
-                }
-                1 -> {
-                    hunterViewModel.useAbility(PowerupTypes.Reveal)
-                    sendAbilityActivation("reveal")
-                    Toast.makeText(this, "Reveal activated", Toast.LENGTH_SHORT).show()
-                }
-                2 -> {
-                    hunterViewModel.useAbility(PowerupTypes.Tracker)
-                    sendAbilityActivation("tracker")
-                    Toast.makeText(this, "Tracker activated", Toast.LENGTH_SHORT).show()
-                }
-                3 -> {
-                    val center = LatLng(hunterLat, hunterLon)
-                    hunterViewModel.setTrap(center, 30.0)
-                    sendAbilityActivation("trap")
-                    Toast.makeText(this, "Trap placed", Toast.LENGTH_SHORT).show()
-                }
-                4 -> {
-                    hunterViewModel.useAbility(PowerupTypes.HunterInvisibility)
-                    sendAbilityActivation("hunterInvisible")
-                }
-                5 -> {
-                    hunterViewModel.useAbility(PowerupTypes.LockOn)
-                    sendAbilityActivation("lockOn")
-                    Toast.makeText(this, "Lock On mode ready", Toast.LENGTH_SHORT).show()
-                }
+            val ability = selectedAbility
+            if (ability != null) {
+                useHunterAbility(ability)
             }
             dialog.dismiss()
         }
@@ -451,7 +391,9 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         dialog.show()
     }
 
-    private fun sendAbilityActivation(abilityId: String) {
+    private fun useHunterAbility(type: PowerupTypes) {
+        hunterViewModel.useAbility(type)
+
         val base = baseUrl ?: return
         val code = roomCode ?: return
         val uid = userId ?: return
@@ -462,25 +404,27 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                 val body = JSONObject().apply {
                     put("userId", uid)
                     put("token", tok)
-                    put("abilityId", abilityId)
+                    put("abilityId", type.id)
                 }.toString()
                 val req = Request.Builder()
                     .url("$base/rooms/$code/ability")
                     .post(body.toRequestBody("application/json".toMediaType()))
                     .build()
                 client.newCall(req).execute().close()
-            } catch (_: Exception) {
-            }
+            } catch (_: Exception) { }
         }
     }
+
+    private val PowerupTypes.id: String
+        get() = this.id
 
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val R = 6371000.0
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a =
-            sin(dLat / 2) * sin(dLat / 2) + cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                    sin(dLon / 2) * sin(dLon / 2)
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
     }

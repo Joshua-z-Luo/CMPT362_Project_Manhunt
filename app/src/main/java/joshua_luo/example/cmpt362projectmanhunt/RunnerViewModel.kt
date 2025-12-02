@@ -19,27 +19,18 @@ class RunnerViewModel : ViewModel() {
     private val _invisibleActive = MutableLiveData(false)
     val invisibleActive: LiveData<Boolean> = _invisibleActive
 
-    // 0.5f means hunter's reveal radius is halved for this runner
     private val _hiddenRadiusFactor = MutableLiveData(1.0f)
     val hiddenRadiusFactor: LiveData<Float> = _hiddenRadiusFactor
 
-    private val _flashBangActive = MutableLiveData(false)
-    val flashBangActive: LiveData<Boolean> = _flashBangActive
+    private val _stationaryActive = MutableLiveData(false)
+    val stationaryActive: LiveData<Boolean> = _stationaryActive
 
-    private val _stationaryHideActive = MutableLiveData(false)
-    val stationaryHideActive: LiveData<Boolean> = _stationaryHideActive
-
-    private val _isCurrentlyHiddenByStationary = MutableLiveData(false)
-    val isCurrentlyHiddenByStationary: LiveData<Boolean> = _isCurrentlyHiddenByStationary
-
-    private val _shieldActive = MutableLiveData(false)
-    val shieldActive: LiveData<Boolean> = _shieldActive
+    private val _shieldCharges = MutableLiveData(0)
+    val shieldCharges: LiveData<Int> = _shieldCharges
 
     private var invisJob: Job? = null
     private var hiddenJob: Job? = null
-    private var flashJob: Job? = null
     private var stationaryJob: Job? = null
-    private var shieldJob: Job? = null
 
     private var lastPosition: LatLng? = null
     private var lastMoveTimestamp: Long = System.currentTimeMillis()
@@ -48,7 +39,6 @@ class RunnerViewModel : ViewModel() {
         when (type) {
             PowerupTypes.Invisibility -> useInvisibility()
             PowerupTypes.Hidden -> useHidden()
-            PowerupTypes.FlashBang -> useFlashBang()
             PowerupTypes.Stationary -> useStationary()
             PowerupTypes.Shield -> useShield()
             else -> { }
@@ -57,9 +47,7 @@ class RunnerViewModel : ViewModel() {
 
     private fun useInvisibility() {
         if (_invisibleActive.value == true) return
-
         _invisibleActive.value = true
-
         invisJob?.cancel()
         invisJob = viewModelScope.launch {
             delay(15_000L)
@@ -69,7 +57,6 @@ class RunnerViewModel : ViewModel() {
 
     private fun useHidden() {
         _hiddenRadiusFactor.value = 0.5f
-
         hiddenJob?.cancel()
         hiddenJob = viewModelScope.launch {
             delay(10_000L)
@@ -77,67 +64,27 @@ class RunnerViewModel : ViewModel() {
         }
     }
 
-    private fun useFlashBang() {
-        if (_flashBangActive.value == true) return
-
-        _flashBangActive.value = true
-
-        flashJob?.cancel()
-        flashJob = viewModelScope.launch {
-            delay(5_000L)
-            _flashBangActive.postValue(false)
-        }
-    }
-
     private fun useStationary() {
-        if (_stationaryHideActive.value == true) return
-
-        _stationaryHideActive.value = true
-        _isCurrentlyHiddenByStationary.value = false
-
+        if (_stationaryActive.value == true) return
+        _stationaryActive.value = true
         stationaryJob?.cancel()
         stationaryJob = viewModelScope.launch {
-            val duration = 20_000L
-            val start = System.currentTimeMillis()
-            while (true) {
-                val now = System.currentTimeMillis()
-                val elapsed = now - start
-                if (elapsed >= duration) break
-
-                val idleTime = now - lastMoveTimestamp
-                _isCurrentlyHiddenByStationary.postValue(idleTime >= 3_000L)
-
-                delay(500L)
-            }
-            _stationaryHideActive.postValue(false)
-            _isCurrentlyHiddenByStationary.postValue(false)
+            delay(20_000L)
+            _stationaryActive.postValue(false)
         }
     }
 
     private fun useShield() {
-        if (_shieldActive.value == true) return
-
-        _shieldActive.value = true
-
-        shieldJob?.cancel()
-        shieldJob = viewModelScope.launch {
-            // Shield is available for one tag or until it times out
-            delay(15_000L)
-            _shieldActive.postValue(false)
-        }
+        val current = _shieldCharges.value ?: 0
+        if (current >= 1) return
+        _shieldCharges.value = 1
     }
 
-    /**
-     * Call this from game logic when a tag would happen.
-     * Returns true if the shield blocked it.
-     */
-    fun consumeShieldIfAvailable(): Boolean {
-        val active = _shieldActive.value == true
-        if (active) {
-            _shieldActive.value = false
-            shieldJob?.cancel()
-        }
-        return active
+    fun consumeShieldIfActive(): Boolean {
+        val current = _shieldCharges.value ?: 0
+        if (current <= 0) return false
+        _shieldCharges.value = current - 1
+        return true
     }
 
     fun updateRunnerPosition(pos: LatLng) {

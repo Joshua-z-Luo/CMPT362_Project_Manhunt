@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Permissions -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.INTERNET" />
@@ -23,7 +27,7 @@
 
         <meta-data
             android:name = "com.google.android.geo.API_KEY"
-            android:value = "enter_your_api" />
+            android:value = "AIzaSyDZeH1ETVQIPbFl6u1eMf1unGcjwcU44P8" />
 
         <!-- New launcher activity (Home screen) -->
         <activity
@@ -85,6 +89,11 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <service
+            android:name=".SyncService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

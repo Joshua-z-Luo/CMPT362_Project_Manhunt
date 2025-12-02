@@ -41,8 +41,7 @@ class ProfileActivity : AppCompatActivity() {
         matchHistory = findViewById(R.id.match_history_recycler)
         editProfileBtn = findViewById(R.id.edit_profile)
         exitBtn = findViewById(R.id.exit_profile)
-        statsSummary = findViewById(R.id.tvStatsSummary)
-        simulateGameBtn = findViewById(R.id.btnSimulateGame)
+        // Todo: (add summary section to profile ui) statsSummary = findViewById(R.id.stats_summary)
 
         // DB + repo setup (fake baseUrl for now)
         db = AppDatabase.getInstance(this)
@@ -125,8 +124,7 @@ class ProfileActivity : AppCompatActivity() {
             if (stats.totalTagsDone >= 10) achievementStrings += "Hunter Elite: 10 tags"
 
             withContext(Dispatchers.Main) {
-                statsSummary.text =
-                    "Games: ${stats.totalGames} • Wins: ${stats.totalWins} • Distance: ${stats.totalDistanceMeters}m"
+               // statsSummary.text = "Games: ${stats.totalGames} • Wins: ${stats.totalWins} • Distance: ${stats.totalDistanceMeters}m"
 
                 achievements.adapter = AchievementAdapter(achievementStrings)
             }

@@ -3,11 +3,13 @@ package joshua_luo.example.cmpt362projectmanhunt
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputFilter
 import android.widget.*
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,6 +24,16 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        private const val SYNC_PREFS_NAME = "manhunt_prefs"
+        private const val PREF_BASE_URL = "base_url"
+        private const val PREF_ROOM_CODE = "room_code"
+        private const val PREF_USER_ID = "user_id"
+        private const val PREF_TOKEN = "token"
+        private const val PREF_DISPLAY_NAME = "display_name"
+        private const val PREF_SYNC_ENABLED = "sync_enabled"
+    }
 
     private val client by lazy { OkHttpClient.Builder().callTimeout(15, TimeUnit.SECONDS).build() }
     private lateinit var fused: FusedLocationProviderClient
@@ -51,6 +63,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var rv: RecyclerView
     private val adapter = MembersAdapter()
 
+    private lateinit var syncPrefs: SharedPreferences
+
     private val permReq = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { }
@@ -58,6 +72,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fused = LocationServices.getFusedLocationProviderClient(this)
+        syncPrefs = getSharedPreferences(SYNC_PREFS_NAME, MODE_PRIVATE)
         setContentView(R.layout.activity_main)
 
         etBaseUrl = findViewById(R.id.etBaseUrl)
@@ -90,23 +105,51 @@ class MainActivity : ComponentActivity() {
         }
 
         btnStartLobby.setOnClickListener {
-            permReq.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-            startLobbyFlow(etBaseUrl.text.toString().trim(), etDisplayName.text.toString().trim().ifEmpty { null })
+            permReq.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+            val base = etBaseUrl.text.toString().trim()
+            if (base.isBlank()) {
+                Toast.makeText(this, "Please enter Base URL", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val name = etDisplayName.text.toString().trim().ifEmpty { null }
+            startLobbyFlow(base, name)
         }
 
         btnJoinLobby.setOnClickListener {
-            permReq.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-            joinLobbyFlow(
-                etBaseUrl.text.toString().trim(),
-                etRoomCode.text.toString().trim().uppercase(),
-                etDisplayName.text.toString().trim().ifEmpty { null }
+            permReq.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
             )
+            val base = etBaseUrl.text.toString().trim()
+            val code = etRoomCode.text.toString().trim().uppercase()
+            if (base.isBlank()) {
+                Toast.makeText(this, "Please enter Base URL", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (code.length != 6) {
+                Toast.makeText(this, "Room code must be 6 characters", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val name = etDisplayName.text.toString().trim().ifEmpty { null }
+            joinLobbyFlow(base, code, name)
         }
 
         btnLeave.setOnClickListener {
             val base = lastBaseUrl
             val code = currentRoom
-            if (!base.isNullOrBlank() && !code.isNullOrBlank()) leaveLobby(base, code) else stopSync()
+            if (!base.isNullOrBlank() && !code.isNullOrBlank()) {
+                leaveLobby(base, code)
+            } else {
+                stopSync()
+                stopSyncServiceAndClearPrefs()
+            }
         }
 
         btnSettings.setOnClickListener {
@@ -132,12 +175,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateSettingsDisplay() {
-        val prefs = getSharedPreferences("GameSettings", MODE_PRIVATE )
+        val prefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
 
-        // Hunter Selection
         tvHunterSelection.text = "Random"
 
-        // Hunter's Range
         val hunterRange = prefs.getString("hunterRange", "50")?.toIntOrNull() ?: 50
         tvHunterRange.text = if (hunterRange >= 1000) {
             "${hunterRange / 1000}km"
@@ -145,7 +186,6 @@ class MainActivity : ComponentActivity() {
             "${hunterRange}m"
         }
 
-        //Runner's Range
         val runnerRange = prefs.getString("runnerRange", "100")?.toIntOrNull() ?: 100
         tvRunnerRange.text = if (runnerRange >= 1000) {
             "${runnerRange / 1000}km"
@@ -153,11 +193,9 @@ class MainActivity : ComponentActivity() {
             "${runnerRange}m"
         }
 
-        // Ability Mode
         val abilityMode = prefs.getInt("abilityMode", 0)
         tvAbilityMode.text = if (abilityMode == 1) "On" else "Off"
 
-        // Timer
         val timerMinutes = SettingsActivity.getTimerMinutes(this)
         tvTimer.text = "$timerMinutes Min"
     }
@@ -174,8 +212,16 @@ class MainActivity : ComponentActivity() {
                     currentRoom = code
                     renderStatus()
                     startSync(baseUrl, code)
+                    updateSyncPrefsAndStartService(
+                        baseUrl = baseUrl,
+                        roomCode = code,
+                        userId = userId!!,
+                        token = token!!,
+                        displayName = name
+                    )
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -190,8 +236,16 @@ class MainActivity : ComponentActivity() {
                     currentRoom = code
                     renderStatus()
                     startSync(baseUrl, code)
+                    updateSyncPrefsAndStartService(
+                        baseUrl = baseUrl,
+                        roomCode = code,
+                        userId = userId!!,
+                        token = token!!,
+                        displayName = name
+                    )
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -223,8 +277,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun leaveLobby(baseUrl: String, code: String) {
-        val uid = userId ?: return stopSync()
-        val tok = token ?: return stopSync()
+        val uid = userId ?: return run {
+            stopSync()
+            stopSyncServiceAndClearPrefs()
+        }
+        val tok = token ?: return run {
+            stopSync()
+            stopSyncServiceAndClearPrefs()
+        }
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val body = JSONObject().apply { put("userId", uid); put("token", tok) }.toString()
@@ -233,13 +293,15 @@ class MainActivity : ComponentActivity() {
                     .post(body.toRequestBody("application/json".toMediaType()))
                     .build()
                 client.newCall(req).execute().close()
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
             withContext(Dispatchers.Main) {
                 stopSync()
                 currentRoom = null
                 userId = null
                 token = null
                 renderStatus()
+                stopSyncServiceAndClearPrefs()
             }
         }
     }
@@ -261,7 +323,6 @@ class MainActivity : ComponentActivity() {
         val runnerRange = SettingsActivity.getRunnerRange(this)
         val abilityMode = SettingsActivity.isAbilityModeEnabled(this)
 
-        //randomly select hunter
         val randomHunter = members.random()
 
         val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
@@ -308,7 +369,8 @@ class MainActivity : ComponentActivity() {
                             .post(body.toRequestBody("application/json".toMediaType()))
                             .build()
                         client.newCall(r).execute().close()
-                    } catch (_: Exception) { }
+                    } catch (_: Exception) {
+                    }
                 }
             }
         }
@@ -334,14 +396,19 @@ class MainActivity : ComponentActivity() {
                                 val updatedAt = m.optLong("updatedAt", 0L)
                                 val locObj = m.optJSONObject("loc")
                                 val loc = if (locObj != null)
-                                    MemberLoc(locObj.optDouble("lat"), locObj.optDouble("lon"), locObj.optLong("ts", 0L))
+                                    MemberLoc(
+                                        locObj.optDouble("lat"),
+                                        locObj.optDouble("lon"),
+                                        locObj.optLong("ts", 0L)
+                                    )
                                 else null
                                 list += Member(id, name.ifBlank { null }, loc, updatedAt)
                             }
                             withContext(Dispatchers.Main) { adapter.submitList(list) }
                         }
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
                 delay(3000L)
             }
         }
@@ -353,5 +420,37 @@ class MainActivity : ComponentActivity() {
         pollJob?.cancel()
         pollJob = null
         adapter.submitList(emptyList())
+    }
+
+    private fun updateSyncPrefsAndStartService(
+        baseUrl: String,
+        roomCode: String,
+        userId: String,
+        token: String,
+        displayName: String?
+    ) {
+        syncPrefs.edit()
+            .putString(PREF_BASE_URL, baseUrl)
+            .putString(PREF_ROOM_CODE, roomCode)
+            .putString(PREF_USER_ID, userId)
+            .putString(PREF_TOKEN, token)
+            .putString(PREF_DISPLAY_NAME, displayName ?: "")
+            .putBoolean(PREF_SYNC_ENABLED, true)
+            .apply()
+
+        val intent = Intent(this, SyncService::class.java)
+        ContextCompat.startForegroundService(this, intent)
+    }
+
+    private fun stopSyncServiceAndClearPrefs() {
+        syncPrefs.edit()
+            .remove(PREF_ROOM_CODE)
+            .remove(PREF_USER_ID)
+            .remove(PREF_TOKEN)
+            .putBoolean(PREF_SYNC_ENABLED, false)
+            .apply()
+
+        val intent = Intent(this, SyncService::class.java)
+        stopService(intent)
     }
 }
