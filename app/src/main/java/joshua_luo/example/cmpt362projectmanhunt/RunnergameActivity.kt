@@ -53,7 +53,6 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     private var selectedAbilityIndex: Int = -1
 
-    private var selectedAbility: Int = -1 // -1 means no selection, 0-2 for ability1-3
     private var userId: String? = null
     private var token: String? = null
     private var roomCode: String? = null
@@ -65,6 +64,10 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     private var runnerLat: Double = 0.0
     private var runnerLon: Double = 0.0
+
+    private var gameEnded = false
+    private var totalDistanceMeters: Double = 0.0
+    private var lastLatLng: LatLng? = null
 
     private lateinit var runnerViewModel: RunnerViewModel
 
@@ -109,9 +112,40 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
             if (runnerViewModel.consumeShieldIfActive()) {
                 Toast.makeText(this, "Shield absorbed the tag!", Toast.LENGTH_SHORT).show()
             } else {
-                val intent = Intent(this, CaughtActivity::class.java)
-                startActivity(intent)
-                finish()
+                //health to 0 immediately
+                val uid = userId ?: return@setOnClickListener
+                val tok = token ?: return@setOnClickListener
+                val code = roomCode ?: return@setOnClickListener
+                val base = baseUrl ?: return@setOnClickListener
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        val body = JSONObject().apply {
+                            put("userId", uid)
+                            put("token", tok)
+                            put("health", 0)
+                        }.toString()
+
+                        val request = Request.Builder()
+                            .url("$base/rooms/$code/status")
+                            .post(body.toRequestBody("application/json".toMediaType()))
+                            .build()
+
+                        client.newCall(request).execute().close()
+
+                        withContext(Dispatchers.Main) {
+                            val intent = Intent(this@RunnerGameActivity, GameEndActivity::class.java)
+                            intent.putExtra("finalTime", tvGameTimer.text.toString())
+                            intent.putExtra("isHunter", false)
+                            intent.putExtra("distanceMeters", totalDistanceMeters)
+                            intent.putExtra("isDead", true)
+                            startActivity(intent)
+                            finish()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             }
         }
 
@@ -147,14 +181,11 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
             override fun onFinish() {
                 tvGameTimer.text = "0min 0sec"
-                Toast.makeText(this@RunnerGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
-
-                // Redirect to Game End Summary page
-                val intent = Intent(this@RunnerGameActivity, GameEndActivity::class.java)
-                intent.putExtra("finalTime", "0min 0sec")
-                intent.putExtra("isHunter", false)
-                startActivity(intent)
-                finish()
+                if (!gameEnded) {
+                    gameEnded = true
+                    Toast.makeText(this@RunnerGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
+                    navigateToGameEnd("0min 0sec")
+                }
             }
         }.start()
     }
@@ -177,6 +208,14 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
                 runnerLon = loc.longitude
 
                 val pos = LatLng(runnerLat, runnerLon)
+
+                //calculate distance travelled
+                lastLatLng?.let { lastPos ->
+                    val distance = calculateDistance(lastPos.latitude , lastPos.longitude, runnerLat, runnerLon)
+                    totalDistanceMeters += distance
+                }
+                lastLatLng = pos
+
                 runnerViewModel.updateRunnerPosition(pos)
                 updateRunnerMarker(runnerLat, runnerLon)
 
@@ -236,7 +275,7 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
         pollJob?.cancel()
         pollJob = lifecycleScope.launch(Dispatchers.IO) {
-            while (isActive) {
+            while (isActive && !gameEnded) {
                 try {
                     val r = Request.Builder().url("$base/rooms/$code/state").get().build()
                     client.newCall(r).execute().use { resp ->
@@ -246,11 +285,48 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
                             val arr = obj.optJSONArray("members") ?: JSONArray()
                             withContext(Dispatchers.Main) {
                                 updateHunterMarker(arr, hId)
+                                checkGameEnd(arr)
                             }
                         }
                     }
                 } catch (_: Exception) { }
                 delay(3000L)
+            }
+        }
+    }
+
+    private fun checkGameEnd(membersArray: JSONArray) {
+        if (gameEnded) return
+
+        var totalRunners = 0
+        var deadRunners = 0
+
+        for (i in 0 until membersArray.length()) {
+            val member = membersArray.getJSONObject(i)
+            val memberId = member.optString("userId")
+
+            if (memberId == hunterId) continue
+
+            totalRunners++
+            val status = member.optJSONObject("status")
+            val health = status?.optInt("health", 100 ) ?: 100
+
+            if (health <= 0) {
+                deadRunners++
+            }
+        }
+
+        //if all runners are dead, hunters win
+        if (totalRunners > 0 && deadRunners >= totalRunners) {
+            gameEnded = true
+            val remainingTime = tvGameTimer.text.toString()
+            lifecycleScope.launch(Dispatchers.Main) {
+                Toast.makeText(
+                    this@RunnerGameActivity,
+                    "All runners caught! Hunters win!",
+                    Toast.LENGTH_LONG
+                ).show()
+                navigateToGameEnd(remainingTime)
             }
         }
     }
@@ -310,17 +386,6 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
             }
             break
         }
-    }
-
-    // reference https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
-    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371000.0
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2) * sin(dLat / 2) + cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
     }
 
     private fun showAbilityDialog() {
@@ -402,6 +467,27 @@ class RunnerGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     private val PowerupTypes.id: String
         get() = this.id
+
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371000.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
+    }
+
+    private fun navigateToGameEnd(finalTime: String) {
+        val intent = Intent(this, GameEndActivity::class.java)
+        intent.putExtra("finalTime",  finalTime)
+        intent.putExtra("isHunter", false)
+        intent.putExtra("distanceMeters", totalDistanceMeters)
+        intent.putExtra("isDead", false )
+        startActivity(intent)
+        finish()
+    }
 
     override fun onDestroy() {
         super.onDestroy()

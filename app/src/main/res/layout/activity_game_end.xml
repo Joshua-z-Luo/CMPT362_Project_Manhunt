@@ -4,126 +4,88 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FF424242">
+    android:background="#FF424242"
+    android:gravity="center">
 
-    <!-- Game End Header -->
+    <!-- Game Over Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="#FFB71C1C"
-        android:padding="24dp"
+        android:padding="32dp"
         android:gravity="center">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="GAME END"
-            android:textSize="48sp"
+            android:text="GAME OVER"
+            android:textSize="56sp"
             android:textStyle="bold"
             android:textColor="#FFFFFFFF"
             android:gravity="center"/>
-
-        <TextView
-            android:id="@+id/tvFinalTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="28min 23sec"
-            android:textSize="24sp"
-            android:textColor="#FFFFFFFF"
-            android:gravity="center"
-            android:layout_marginTop="8dp"/>
     </LinearLayout>
-
-    <!-- Map Section -->
-    <fragment
-        android:id="@+id/mapFragment"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
 
     <!-- Statistics Section -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="vertical"
-        android:background="#FFB71C1C"
-        android:padding="24dp">
+        android:padding="32dp"
+        android:gravity="center">
 
-        <!-- Remaining Survivor -->
+        <!-- time Remaining -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="40dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Remaining Survivor"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"
+                android:text="Remaining Time"
+                android:textSize="24sp"
+                android:textColor="#FFBDBDBD"
                 android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/tvRemainingSurvivor"
+                android:id="@+id/tvFinalTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="user3"
-                android:textSize="20sp"
+                android:text="28min 23sec"
+                android:textSize="36sp"
                 android:textColor="#FFFFFFFF"
-                android:textAlignment="textEnd"/>
+                android:textStyle="bold"
+                android:layout_marginTop="8dp"/>
         </LinearLayout>
 
-        <!-- Longest Distance -->
+        <!-- distance Travelled -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:orientation="vertical"
+            android:gravity="center">
 
             <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Longest Distance"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"/>
-
-            <TextView
-                android:id="@+id/tvLongestDistance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3km"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"
-                android:textAlignment="textEnd"/>
-        </LinearLayout>
-
-        <!-- You Travelled -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="You Travelled"
-                android:textSize="20sp"
-                android:textColor="#FFFFFFFF"/>
+                android:textSize="24sp"
+                android:textColor="#FFBDBDBD"
+                android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/tvYouTravelled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3km"
-                android:textSize="20sp"
+                android:text="0.0km"
+                android:textSize="36sp"
                 android:textColor="#FFFFFFFF"
-                android:textAlignment="textEnd"/>
+                android:textStyle="bold"
+                android:layout_marginTop="8dp"/>
         </LinearLayout>
     </LinearLayout>
 

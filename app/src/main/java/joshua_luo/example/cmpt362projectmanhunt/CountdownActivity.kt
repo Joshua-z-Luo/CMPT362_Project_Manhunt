@@ -59,6 +59,7 @@ class CountdownActivity : ComponentActivity() {
                 val isHunter = userId == hunterId
 
                 if (isHunter) {
+                    // Launch Hunter Game
                     val intent = Intent(this@CountdownActivity, HunterGameActivity::class.java).apply {
                         putExtra("userId", userId)
                         putExtra("roomCode", roomCode)
@@ -69,14 +70,16 @@ class CountdownActivity : ComponentActivity() {
                     }
                     startActivity(intent)
                 } else {
+                    // Launch Runner Game
                     val intent = Intent(this@CountdownActivity, RunnerGameActivity::class.java).apply {
                         putExtra("userId", userId)
                         putExtra("roomCode", roomCode)
                         putExtra("baseUrl", baseUrl)
                         putExtra("timerMinutes", timerMinutes)
+                        putExtra("hunterRange", hunterRange)
                         putExtra("runnerRange", runnerRange)
                         putExtra("abilityMode", abilityMode)
-                        putExtra("hunterId", hunterId)
+                        putExtra("hunterId", hunterId)  // Runner needs to know who the hunter is
                     }
                     startActivity(intent)
                 }

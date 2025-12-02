@@ -98,14 +98,14 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
 
-        <!-- Caught/Death Page -->
+        <!-- Caught Activity -->
         <activity
             android:name=".CaughtActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
 
-        <!-- Game End Summary Page -->
+        <!-- Game End Activity -->
         <activity
             android:name=".GameEndActivity"
             android:exported="false"

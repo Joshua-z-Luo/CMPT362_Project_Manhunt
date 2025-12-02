@@ -1,9 +1,9 @@
 package joshua_luo.example.cmpt362projectmanhunt
 
-import android.content.Intent
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -46,6 +46,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
     private var hunterMarker: Marker? = null
     private var hunterCircle: Circle? = null
     private val runnerMarkers = mutableMapOf<String, Marker>()
+
     private lateinit var tvGameTimer: TextView
     private lateinit var abilityButton: Button
 
@@ -59,6 +60,12 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     private var hunterLat: Double = 0.0
     private var hunterLon: Double = 0.0
+
+    private var gameEnded = false
+
+    // Distance tracking
+    private var totalDistanceMeters: Double = 0.0
+    private var lastLatLng: LatLng? = null
 
     private lateinit var hunterViewModel: HunterViewModel
 
@@ -84,7 +91,6 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         timerMinutes = intent.getIntExtra("timerMinutes", 30)
         hunterRange = intent.getIntExtra("hunterRange", 50)
         abilityMode = intent.getBooleanExtra("abilityMode", false)
-
 
         val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
         token = prefs.getString("token", null)
@@ -124,7 +130,6 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-
         try {
             googleMap?.isMyLocationEnabled = true
         } catch (_: SecurityException) { }
@@ -143,14 +148,11 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
             override fun onFinish() {
                 tvGameTimer.text = "0min 0sec"
-                Toast.makeText(this@HunterGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
-
-                // Redirect to Game End Summary page
-                val intent = Intent(this@HunterGameActivity, GameEndActivity::class.java)
-                intent.putExtra("finalTime", "0min 0sec")
-                intent.putExtra("isHunter", true)
-                startActivity(intent)
-                finish()
+                if (!gameEnded) {
+                    gameEnded = true
+                    Toast.makeText(this@HunterGameActivity, "Time's up! Runners win!", Toast.LENGTH_LONG).show()
+                    navigateToGameEnd("0min 0sec")
+                }
             }
         }.start()
     }
@@ -173,6 +175,14 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                 hunterLon = loc.longitude
 
                 val pos = LatLng(hunterLat, hunterLon)
+
+                // Calculate distance travelled
+                lastLatLng?.let { lastPos ->
+                    val distance = calculateDistance(lastPos.latitude, lastPos.longitude, hunterLat, hunterLon)
+                    totalDistanceMeters += distance
+                }
+                lastLatLng = pos
+
                 hunterViewModel.updateHunterPosition(pos)
                 updateHunterMarker(hunterLat, hunterLon)
 
@@ -208,7 +218,6 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                     .title("You (Hunter)")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
             )
-
             hunterCircle = googleMap?.addCircle(
                 CircleOptions()
                     .center(position)
@@ -217,8 +226,6 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                     .strokeWidth(3f)
                     .fillColor(Color.argb(50, 255, 0, 0))
             )
-
-
             googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         } else {
             hunterMarker?.position = position
@@ -238,7 +245,7 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
 
         pollJob?.cancel()
         pollJob = lifecycleScope.launch(Dispatchers.IO) {
-            while (isActive) {
+            while (isActive && !gameEnded) {
                 try {
                     val r = Request.Builder().url("$base/rooms/$code/state").get().build()
                     client.newCall(r).execute().use { resp ->
@@ -246,15 +253,51 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
                         if (resp.isSuccessful) {
                             val obj = JSONObject(txt)
                             val arr = obj.optJSONArray("members") ?: JSONArray()
-
                             withContext(Dispatchers.Main) {
                                 updateRunnerMarkers(arr)
+                                checkGameEnd(arr)
                             }
                         }
                     }
                 } catch (_: Exception) { }
                 delay(3000L)
             }
+        }
+    }
+
+    private fun checkGameEnd(membersArray: JSONArray) {
+        if (gameEnded) return
+
+        var totalRunners = 0
+        var deadRunners = 0
+
+        for (i in 0 until membersArray.length()) {
+            val member = membersArray.getJSONObject(i)
+            val memberId = member.optString("userId")
+
+            // Skip the hunter (current user)
+            if (memberId == userId) continue
+
+            totalRunners++
+
+            val status = member.optJSONObject("status")
+            val health = status?.optInt("health", 100) ?: 100
+
+            if (health <= 0) {
+                deadRunners++
+            }
+        }
+
+        //if all runners are dead, hunters win
+        if (totalRunners > 0 && deadRunners >= totalRunners) {
+            gameEnded = true
+            val remainingTime = tvGameTimer.text.toString()
+            Toast.makeText(
+                this@HunterGameActivity,
+                "All runners caught! Hunters win!",
+                Toast.LENGTH_LONG
+            ).show()
+            navigateToGameEnd(remainingTime)
         }
     }
 
@@ -283,7 +326,6 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         for (i in 0 until membersArray.length()) {
             val m = membersArray.getJSONObject(i)
             val id = m.optString("userId")
-
             if (id == userId) continue
 
             val locObj = m.optJSONObject("loc") ?: continue
@@ -438,8 +480,18 @@ class HunterGameActivity : FragmentActivity(), OnMapReadyCallback {
         val a = sin(dLat / 2) * sin(dLat / 2) +
                 cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
                 sin(dLon / 2) * sin(dLon / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a ))
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
+    }
+
+    private fun navigateToGameEnd(finalTime: String) {
+        val intent = Intent(this, GameEndActivity::class.java)
+        intent.putExtra("finalTime", finalTime)
+        intent.putExtra("isHunter", true)
+        intent.putExtra("distanceMeters", totalDistanceMeters)
+        intent.putExtra("isDead", false)
+        startActivity(intent)
+        finish()
     }
 
     override fun onDestroy() {

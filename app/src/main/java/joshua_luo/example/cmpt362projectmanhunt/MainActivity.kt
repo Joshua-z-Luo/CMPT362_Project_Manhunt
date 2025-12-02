@@ -52,7 +52,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var btnJoinLobby: Button
     private lateinit var btnLeave: Button
     private lateinit var btnSettings: Button
-    private lateinit var btnMap: Button
     private lateinit var btnStartGame: Button
     private lateinit var tvRoom: TextView
     private lateinit var tvUser: TextView
@@ -83,7 +82,6 @@ class MainActivity : ComponentActivity() {
         btnJoinLobby = findViewById(R.id.btnJoinLobby)
         btnLeave = findViewById(R.id.btnLeave)
         btnSettings = findViewById(R.id.btnSettings)
-        btnMap = findViewById(R.id.btnMap)
         btnStartGame = findViewById(R.id.btnStartGame)
         tvRoom = findViewById(R.id.tvRoom)
         tvUser = findViewById(R.id.tvUser)
@@ -163,11 +161,6 @@ class MainActivity : ComponentActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        btnMap.setOnClickListener {
-            // TODO: map boundary setting functionality
-            Toast.makeText(this, "Map boundary setting", Toast.LENGTH_SHORT).show()
-        }
-
         btnStartGame.setOnClickListener {
             startGame()
         }
@@ -179,6 +172,68 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         updateSettingsDisplay()
+
+        if (currentRoom != null) {
+            sendLocalSettingsToServer()
+        }
+    }
+
+    private fun sendLocalSettingsToServer() {
+        val base = lastBaseUrl ?: return
+        val code = currentRoom ?: return
+
+        val localPrefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
+        val timerMinutes = SettingsActivity.getTimerMinutes(this)
+        val hunterRange = SettingsActivity.getHunterRange(this)
+        val runnerRange = SettingsActivity.getRunnerRange(this)
+        val abilityMode = SettingsActivity.isAbilityModeEnabled(this)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val getReq = Request.Builder().url("$base/rooms/$code/settings").get().build()
+                client.newCall(getReq).execute().use { resp ->
+                    if (resp.isSuccessful) {
+                        val txt = resp.body?.string().orEmpty()
+                        val obj = JSONObject(txt)
+                        val existingSettings = obj.optJSONArray("settings") ?: JSONArray()
+
+
+                        var hasGameStarted = false
+                        for (i in 0 until existingSettings.length()) {
+                            val setting = existingSettings.getJSONObject(i)
+                            if (setting.optString("key") == "gameStarted" &&
+                                setting.optString("value") == "true") {
+                                hasGameStarted = true
+                                break
+                            }
+                        }
+
+                        if (!hasGameStarted) {
+                            val settingsArray = JSONArray().apply {
+                                put(JSONObject().apply { put("key", "timerMinutes"); put("value", timerMinutes.toString()) })
+                                put(JSONObject().apply { put("key", "hunterRange"); put("value", hunterRange.toString()) })
+                                put(JSONObject().apply { put("key", "runnerRange"); put("value", runnerRange.toString()) })
+                                put(JSONObject().apply { put("key", "abilityMode"); put("value", abilityMode.toString()) })
+                            }
+
+                            val body = JSONObject().apply {
+                                put("settings", settingsArray)
+                            }.toString()
+
+                            val postReq = Request.Builder()
+                                .url("$base/rooms/$code/settings")
+                                .post(body.toRequestBody("application/json".toMediaType()))
+                                .build()
+
+                            client.newCall(postReq).execute().close()
+                            android.util.Log.d("MainActivity", "Settings sent to server")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to send settings: ${e.message}")
+            }
+        }
     }
 
     private fun renderStatus() {
@@ -187,34 +242,63 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateSettingsDisplay() {
-        val prefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
+
+        val prefs = getSharedPreferences(SYNC_PREFS_NAME, MODE_PRIVATE)
+
+        val hunterRange = prefs.getInt("server_hunterRange", -1)
+        val runnerRange = prefs.getInt("server_runnerRange", -1)
+        val abilityModeFromServer = prefs.getInt("server_abilityMode", -1)
+        val timerMinutesFromServer = prefs.getInt("server_timerMinutes", -1)
 
         // Hunter Selection
         tvHunterSelection.text = "Random"
 
-        // Hunter's Range
-        val hunterRange = prefs.getString("hunterRange", "50")?.toIntOrNull() ?: 50
-        tvHunterRange.text = if (hunterRange >= 1000) {
-            "${hunterRange / 1000}km"
+        if (hunterRange > 0) {
+            tvHunterRange.text = if (hunterRange >= 1000) {
+                "${hunterRange / 1000}km"
+            } else {
+                "${hunterRange}m"
+            }
         } else {
-            "${hunterRange}m"
+            val localPrefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
+            val localHunterRange = localPrefs.getString("hunterRange", "50")?.toIntOrNull() ?: 50
+            tvHunterRange.text = if (localHunterRange >= 1000) {
+                "${localHunterRange / 1000}km"
+            } else {
+                "${localHunterRange}m"
+            }
         }
 
-        //Runner's Range
-        val runnerRange = prefs.getString("runnerRange", "100")?.toIntOrNull() ?: 100
-        tvRunnerRange.text = if (runnerRange >= 1000) {
-            "${runnerRange / 1000}km"
+        if (runnerRange > 0) {
+            tvRunnerRange.text = if (runnerRange >= 1000) {
+                "${runnerRange / 1000}km"
+            } else {
+                "${runnerRange}m"
+            }
         } else {
-            "${runnerRange}m"
+            val localPrefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
+            val localRunnerRange = localPrefs.getString("runnerRange", "100")?.toIntOrNull() ?: 100
+            tvRunnerRange.text = if (localRunnerRange >= 1000) {
+                "${localRunnerRange / 1000}km"
+            } else {
+                "${localRunnerRange}m"
+            }
         }
 
-        // Ability Mode
-        val abilityMode = prefs.getInt("abilityMode", 0)
-        tvAbilityMode.text = if (abilityMode == 1) "On" else "Off"
+        if (abilityModeFromServer >= 0) {
+            tvAbilityMode.text = if (abilityModeFromServer == 1) "On" else "Off"
+        } else {
+            val localPrefs = getSharedPreferences("GameSettings", MODE_PRIVATE)
+            val localAbilityMode = localPrefs.getInt("abilityMode", 0)
+            tvAbilityMode.text = if (localAbilityMode == 1) "On" else "Off"
+        }
 
-        // Timer
-        val timerMinutes = SettingsActivity.getTimerMinutes(this)
-        tvTimer.text = "$timerMinutes Min"
+        if (timerMinutesFromServer > 0) {
+            tvTimer.text = "$timerMinutesFromServer Min"
+        } else {
+            val timerMinutes = SettingsActivity.getTimerMinutes(this)
+            tvTimer.text = "$timerMinutes Min"
+        }
     }
 
     private fun startLobbyFlow(baseUrl: String, name: String?) {
@@ -230,14 +314,18 @@ class MainActivity : ComponentActivity() {
                     renderStatus()
                     startSync(baseUrl, code)
                     updateSyncPrefsAndStartService(
-                        baseUrl = baseUrl,
-                        roomCode = code,
-                        userId = userId!!,
-                        token = token!!,
-                        displayName = name
+                        baseUrl,
+                        code,
+                        pair.first,
+                        pair.second,
+                        name
                     )
                 }
-            } catch (_: Exception) { }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -253,14 +341,15 @@ class MainActivity : ComponentActivity() {
                     renderStatus()
                     startSync(baseUrl, code)
                     updateSyncPrefsAndStartService(
-                        baseUrl = baseUrl,
-                        roomCode = code,
-                        userId = userId!!,
-                        token = token!!,
-                        displayName = name
+                        baseUrl,
+                        code,
+                        pair.first,
+                        pair.second,
+                        name
                     )
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -278,7 +367,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun joinRoomSuspend(baseUrl: String, code: String, name: String?): Pair<String, String> {
-        val body = JSONObject().apply { if (!name.isNullOrBlank()) put("name", name) }.toString()
+        val body = JSONObject().apply {
+            if (!name.isNullOrBlank()) put("name", name)
+            put("health", 100)
+        }.toString()
         val req = Request.Builder()
             .url("$baseUrl/rooms/$code/join")
             .post(body.toRequestBody("application/json".toMediaType()))
@@ -308,7 +400,8 @@ class MainActivity : ComponentActivity() {
                     .post(body.toRequestBody("application/json".toMediaType()))
                     .build()
                 client.newCall(req).execute().close()
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
             withContext(Dispatchers.Main) {
                 stopSync()
                 currentRoom = null
@@ -340,14 +433,61 @@ class MainActivity : ComponentActivity() {
         //randomly select hunter
         val randomHunter = members.random()
 
-        val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
-        prefs.edit().apply {
-            putString("token", token)
-            apply()
-        }
+        val base = lastBaseUrl ?: return
+        val code = currentRoom ?: return
 
+        val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
+        prefs.edit().putString("token", token).apply()
+
+
+        pollJob?.cancel()
+        pollJob = null
+
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val settingsArray = JSONArray().apply {
+                    put(JSONObject().apply { put("key", "gameStarted"); put("value", "true") })
+                    put(JSONObject().apply { put("key", "hunterId"); put("value", randomHunter.userId) })
+                    put(JSONObject().apply { put("key", "timerMinutes"); put("value", timerMinutes.toString()) })
+                    put(JSONObject().apply { put("key", "hunterRange"); put("value", hunterRange.toString()) })
+                    put(JSONObject().apply { put("key", "runnerRange"); put("value", runnerRange.toString()) })
+                    put(JSONObject().apply { put("key", "abilityMode"); put("value", abilityMode.toString()) })
+                }
+
+                val body = JSONObject().apply {
+                    put("settings", settingsArray)
+                }.toString()
+
+                val request = Request.Builder()
+                    .url("$base/rooms/$code/settings")
+                    .post(body.toRequestBody("application/json".toMediaType()))
+                    .build()
+
+                client.newCall(request).execute().use { resp ->
+                    if (resp.isSuccessful) {
+                        withContext(Dispatchers.Main) {
+                            launchCountdownActivity(randomHunter.userId, timerMinutes, hunterRange, runnerRange, abilityMode)
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@MainActivity, "Failed to start game: ${resp.code}", Toast.LENGTH_SHORT).show()
+                            startSync(base, code)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    startSync(base, code)
+                }
+            }
+        }
+    }
+
+    private fun launchCountdownActivity(hunterId: String, timerMinutes: Int, hunterRange: Int, runnerRange: Int, abilityMode: Boolean) {
         val intent = Intent(this, CountdownActivity::class.java).apply {
-            putExtra("hunterId", randomHunter.userId)
+            putExtra("hunterId", hunterId)
             putExtra("userId", userId)
             putExtra("roomCode", currentRoom)
             putExtra("baseUrl", lastBaseUrl)
@@ -384,7 +524,8 @@ class MainActivity : ComponentActivity() {
                             .post(body.toRequestBody("application/json".toMediaType()))
                             .build()
                         client.newCall(r).execute().close()
-                    } catch (_: Exception) { }
+                    } catch (_: Exception) {
+                    }
                 }
             }
         }
@@ -394,10 +535,88 @@ class MainActivity : ComponentActivity() {
 
         pollJob?.cancel()
         pollJob = lifecycleScope.launch(Dispatchers.IO) {
+            var hasLaunchedGame = false
+
+            android.util.Log.d("MainActivity", "Started polling for room $code")
+
             while (isActive) {
                 try {
-                    val r = Request.Builder().url("$baseUrl/rooms/$code/state").get().build()
+                    android.util.Log.d("MainActivity", "Polling settings...")
+
+
+                    val r = Request.Builder().url("$baseUrl/rooms/$code/settings").get().build()
                     client.newCall(r).execute().use { resp ->
+                        val txt = resp.body?.string().orEmpty()
+                        android.util.Log.d("MainActivity", "Settings response: $txt")
+
+                        if (resp.isSuccessful) {
+                            val obj = JSONObject(txt)
+                            val settingsArray = obj.optJSONArray("settings") ?: JSONArray()
+
+                            android.util.Log.d("MainActivity", "Settings array length: ${settingsArray.length()}")
+
+                            var gameStarted = false
+                            var hunterId = ""
+                            var timerMinutes = 30
+                            var hunterRange = 50
+                            var runnerRange = 100
+                            var abilityMode = false
+
+
+                            for (i in 0 until settingsArray.length()) {
+                                val setting = settingsArray.getJSONObject(i)
+                                val key = setting.optString("key")
+                                val value = setting.optString("value")
+                                android.util.Log.d("MainActivity", "Setting: $key = $value")
+
+                                when (key) {
+                                    "gameStarted" -> gameStarted = value == "true"
+                                    "hunterId" -> hunterId = value
+                                    "timerMinutes" -> timerMinutes = value.toIntOrNull() ?: 30
+                                    "hunterRange" -> hunterRange = value.toIntOrNull() ?: 50
+                                    "runnerRange" -> runnerRange = value.toIntOrNull() ?: 100
+                                    "abilityMode" -> abilityMode = value == "true"
+                                }
+                            }
+
+                            syncPrefs.edit().apply {
+                                putInt("server_timerMinutes", timerMinutes )
+                                putInt("server_hunterRange", hunterRange)
+                                putInt("server_runnerRange", runnerRange)
+                                putInt("server_abilityMode", if (abilityMode) 1 else 0)
+                                apply()
+                            }
+
+                            withContext(Dispatchers.Main) {
+                                updateSettingsDisplay()
+                            }
+
+                            android.util.Log.d("MainActivity", "Parsed: gameStarted=$gameStarted, hunterId=$hunterId, hasLaunched=$hasLaunchedGame")
+
+                            if (gameStarted && hunterId.isNotBlank() && !hasLaunchedGame) {
+                                hasLaunchedGame = true
+
+                                android.util.Log.d("MainActivity", "LAUNCHING GAME!")
+
+                                //save token
+                                val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
+                                prefs.edit().putString("token", tok).apply()
+
+                                //launch game on main thread
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(this@MainActivity, "Game starting!", Toast.LENGTH_SHORT).show()
+                                    launchCountdownActivity(hunterId, timerMinutes, hunterRange, runnerRange, abilityMode)
+                                }
+                                cancel()
+                                return@use
+                            }
+                        } else {
+                            android.util.Log.e("MainActivity", "Settings request failed: ${resp.code}")
+                        }
+                    }
+
+                    val r2 = Request.Builder().url("$baseUrl/rooms/$code/state").get().build()
+                    client.newCall(r2).execute().use { resp ->
                         val txt = resp.body?.string().orEmpty()
                         if (resp.isSuccessful) {
                             val obj = JSONObject(txt)
@@ -421,7 +640,8 @@ class MainActivity : ComponentActivity() {
                             withContext(Dispatchers.Main) { adapter.submitList(list) }
                         }
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
                 delay(3000L)
             }
         }
