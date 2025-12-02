@@ -5,11 +5,25 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/manhunt2"
+        android:scaleType="centerCrop"
+        android:contentDescription="Manhunt background"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC000000"/>
+
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:title="Rooms Client"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:background="#CC000000"
+        app:titleTextColor="#FFFFFFFF"
         app:titleCentered="true" />
 
     <ScrollView
@@ -26,12 +40,15 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="#99000000"
+                app:hintTextColor="#FFBBBBBB">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etBaseUrl"
                     android:hint="Base URL"
                     android:text="https://cmpt362-rooms-backend.joshua-z-luo.workers.dev"
                     android:inputType="textUri"
+                    android:textColor="#FFFFFFFF"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -39,11 +56,14 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_marginTop="12dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="#99000000"
+                app:hintTextColor="#FFBBBBBB">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etDisplayName"
                     android:hint="Display Name"
                     android:inputType="textPersonName"
+                    android:textColor="#FFFFFFFF"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -51,11 +71,14 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_marginTop="12dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                app:boxBackgroundColor="#99000000"
+                app:hintTextColor="#FFBBBBBB">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etRoomCode"
                     android:hint="Room Code (EX:ABC456)"
                     android:inputType="textCapCharacters"
+                    android:textColor="#FFFFFFFF"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -73,8 +96,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    app:backgroundTint="?attr/colorPrimary"
-                    android:textColor="?attr/colorOnPrimary" />
+                    app:backgroundTint="#FFCC0000"
+                    android:textColor="#FFFFFFFF" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnJoinLobby"
@@ -83,8 +106,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    app:backgroundTint="?attr/colorSecondaryContainer"
-                    android:textColor="?attr/colorOnSecondaryContainer" />
+                    app:backgroundTint="#FF880000"
+                    android:textColor="#FFFFFFFF" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLeave"
@@ -93,13 +116,12 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    app:backgroundTint="?attr/colorSurface"
+                    app:backgroundTint="#99000000"
                     app:strokeWidth="1dp"
-                    app:strokeColor="?attr/colorOutline"
-                    android:textColor="?attr/colorOnSurface" />
+                    app:strokeColor="#FFFFFFFF"
+                    android:textColor="#FFFFFFFF" />
             </LinearLayout>
 
-            <!-- Settings and Start Game Buttons -->
             <LinearLayout
                 android:layout_marginTop="12dp"
                 android:gravity="center"
@@ -113,10 +135,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    app:backgroundTint="?attr/colorTertiary"
-                    android:textColor="?attr/colorOnTertiary"
+                    app:backgroundTint="#FF660000"
+                    android:textColor="#FFFFFFFF"
                     app:icon="@android:drawable/ic_menu_preferences"
-                    app:iconGravity="textStart" />
+                    app:iconGravity="textStart"
+                    app:iconTint="#FFFFFFFF" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnStartGame"
@@ -125,10 +148,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    app:backgroundTint="?attr/colorError"
-                    android:textColor="?attr/colorOnError"
+                    app:backgroundTint="#FFFF0000"
+                    android:textColor="#FFFFFFFF"
                     app:icon="@android:drawable/ic_media_play"
-                    app:iconGravity="textStart" />
+                    app:iconGravity="textStart"
+                    app:iconTint="#FFFFFFFF" />
             </LinearLayout>
 
             <!-- Game Settings Display Card -->
@@ -138,7 +162,8 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="16dp"
                 app:cardUseCompatPadding="true"
-                app:cardBackgroundColor="#FFB71C1C">
+                app:cardBackgroundColor="#DDCC0000"
+                app:cardElevation="8dp">
                 <LinearLayout
                     android:padding="16dp"
                     android:orientation="vertical"
@@ -266,12 +291,15 @@
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.card.MaterialCardView
                 android:layout_marginTop="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="16dp"
-                app:cardUseCompatPadding="true">
+                app:cardUseCompatPadding="true"
+                app:cardBackgroundColor="#CC000000"
+                app:cardElevation="8dp">
                 <LinearLayout
                     android:padding="16dp"
                     android:orientation="vertical"
@@ -282,12 +310,14 @@
                         android:text="Current Room: -"
                         android:textStyle="bold"
                         android:textSize="16sp"
+                        android:textColor="#FFFFFFFF"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                     <TextView
                         android:id="@+id/tvUser"
                         android:text="Your ID: -"
                         android:layout_marginTop="4dp"
+                        android:textColor="#FFFFFFFF"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                 </LinearLayout>
@@ -298,12 +328,17 @@
                 android:text="Members"
                 android:textStyle="bold"
                 android:textSize="18sp"
+                android:textColor="#FFFFFFFF"
+                android:background="#99000000"
+                android:padding="8dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvMembers"
                 android:layout_marginTop="8dp"
+                android:background="#99000000"
+                android:padding="8dp"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
         </LinearLayout>

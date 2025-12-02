@@ -49,15 +49,20 @@ class CountdownActivity : ComponentActivity() {
         runnerRange: Int,
         abilityMode: Boolean
     ) {
+        val isHunter = userId == hunterId
+
         countdown = object : CountDownTimer(30000, 1000) {
             override fun onTick(millisUntilFinished: Long ) {
                 val seconds = (millisUntilFinished / 1000).toInt()
-                tvCountdown.text = "Game starts in\n$seconds sec.."
+
+                if (isHunter) {
+                    tvCountdown.text = "Game starts in\n$seconds sec..\n\nPrepare to hunt!"
+                } else {
+                    tvCountdown.text = "Game starts in\n$seconds sec..\n\nRun and hide!"
+                }
             }
 
             override fun onFinish() {
-                val isHunter = userId == hunterId
-
                 if (isHunter) {
                     // Launch Hunter Game
                     val intent = Intent(this@CountdownActivity, HunterGameActivity::class.java).apply {

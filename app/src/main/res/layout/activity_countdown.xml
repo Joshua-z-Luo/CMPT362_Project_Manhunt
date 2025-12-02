@@ -1,19 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background= "#FFB71C1C">
+    android:layout_height="match_parent">
 
+    <!-- Background Image -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/manhunt5"
+        android:scaleType="centerCrop"
+        android:contentDescription="Manhunt background"/>
+
+    <!-- Dark Overlay for better text visibility -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"/>
+
+    <!-- Countdown Text -->
     <TextView
         android:id="@+id/tvCountdown"
-        android:layout_width= "wrap_content"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text = "Game starts in\n30 sec.."
+        android:text="Game starts in\n30 sec.."
         android:textSize="48sp"
         android:textColor="#FFFFFFFF"
-        android:textAlignment ="center"
+        android:textAlignment="center"
         android:gravity="center"
-        android:lineSpacingExtra= "8dp"/>
+        android:lineSpacingExtra="8dp"
+        android:textStyle="bold"
+        android:shadowColor="#FF000000"
+        android:shadowDx="4"
+        android:shadowDy="4"
+        android:shadowRadius="8"
+        android:padding="32dp"
+        android:background="#CC000000"/>
 
 </RelativeLayout>

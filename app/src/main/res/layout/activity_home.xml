@@ -5,19 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Background placeholder -->
     <ImageView
         android:id="@+id/bgImage"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/bg_home_placeholder"
+        android:src="@drawable/manhunt1"
+        android:contentDescription="Manhunt home background"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Overlay for Contrast-->
     <View
         android:id="@+id/overlay"
         android:layout_width="0dp"
