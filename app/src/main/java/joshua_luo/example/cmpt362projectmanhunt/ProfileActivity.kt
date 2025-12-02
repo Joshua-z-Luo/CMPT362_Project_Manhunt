@@ -7,17 +7,29 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import java.io.File
 
-class ProfileActivity: AppCompatActivity() {
+class ProfileActivity : AppCompatActivity() {
+
     private lateinit var profilePhoto: ImageView
     private lateinit var username: TextView
     private lateinit var achievements: RecyclerView
     private lateinit var matchHistory: RecyclerView
     private lateinit var editProfileBtn: Button
     private lateinit var exitBtn: Button
+    private lateinit var statsSummary: TextView
+    private lateinit var simulateGameBtn: Button
+
+    private lateinit var db: AppDatabase
+    private lateinit var statsDao: StatsDao
+    private lateinit var statsRepository: StatsRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +41,15 @@ class ProfileActivity: AppCompatActivity() {
         matchHistory = findViewById(R.id.match_history_recycler)
         editProfileBtn = findViewById(R.id.edit_profile)
         exitBtn = findViewById(R.id.exit_profile)
+        statsSummary = findViewById(R.id.tvStatsSummary)
+        simulateGameBtn = findViewById(R.id.btnSimulateGame)
+
+        // DB + repo setup (fake baseUrl for now)
+        db = AppDatabase.getInstance(this)
+        statsDao = db.statsDao()
+        val client = OkHttpClient()
+        val fakeBaseUrl = "https://example.com"
+        statsRepository = StatsRepository(statsDao, client, fakeBaseUrl)
 
         // Profile Photo
         val profileImgFile = File(getExternalFilesDir(null), "profile_photo.jpg")
@@ -47,14 +68,10 @@ class ProfileActivity: AppCompatActivity() {
         val name = profilePrefs.getString("username_key", "")
         username.text = String.format("Username: %s", name)
 
-        // Achievements
-        // TODO: use actual data
-        val achievementsList = listOf("Fist Win", "Top Hunter", "Top Runner")
+        // Achievements list (we'll fill dynamically)
         achievements.layoutManager = LinearLayoutManager(this)
-        achievements.adapter = AchievementAdapter(achievementsList)
 
-        // MatchHistory
-        // TODO: use actual data
+        // Match history – keep dummy data for now
         val matchList = listOf(
             MatchHistoryItem("Game001", "Runner", "Runner", 12.5),
             MatchHistoryItem("Game002", "Hunter", "Hunter", 8.3)
@@ -62,15 +79,57 @@ class ProfileActivity: AppCompatActivity() {
         matchHistory.layoutManager = LinearLayoutManager(this)
         matchHistory.adapter = HistoryAdapter(matchList)
 
+        simulateGameBtn.setOnClickListener {
+            simulateGameAndRefresh()
+        }
+
         editProfileBtn.setOnClickListener {
-            // go to profile settings
             startActivity(Intent(this, ProfileSettingActivity::class.java))
         }
         exitBtn.setOnClickListener {
-            // exit profile
             finish()
         }
 
+        updateAchievementsAndStatsUi()
     }
 
+    private fun simulateGameAndRefresh() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            // Fake game result for demo
+            val randomWin = (0..1).random() == 0
+            val fakeGame = GameHistoryEntity(
+                finishedAt = System.currentTimeMillis(),
+                role = "Runner",
+                result = if (randomWin) "Win" else "Loss",
+                distanceMeters = 1000L,
+                timeHiddenMs = 60_000L,
+                timeAsHunterMs = 0L,
+                tagsDone = 1,
+                tagsReceived = 0
+            )
+            statsRepository.recordGame(fakeGame)
+            withContext(Dispatchers.Main) {
+                updateAchievementsAndStatsUi()
+            }
+        }
+    }
+
+    private fun updateAchievementsAndStatsUi() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val stats = statsRepository.getStatsOrDefault()
+
+            val achievementStrings = mutableListOf<String>()
+            if (stats.totalGames >= 1) achievementStrings += "First Game"
+            if (stats.totalWins >= 1) achievementStrings += "First Win"
+            if (stats.totalDistanceMeters >= 5_000) achievementStrings += "Runner: 5km travelled"
+            if (stats.totalTagsDone >= 10) achievementStrings += "Hunter Elite: 10 tags"
+
+            withContext(Dispatchers.Main) {
+                statsSummary.text =
+                    "Games: ${stats.totalGames} • Wins: ${stats.totalWins} • Distance: ${stats.totalDistanceMeters}m"
+
+                achievements.adapter = AchievementAdapter(achievementStrings)
+            }
+        }
+    }
 }

@@ -16,8 +16,9 @@
         app:title="Player Profile"
         app:titleTextColor="#FFFFFF" />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll_area"
+        android:fillViewport="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/header"
@@ -80,7 +81,7 @@
                 android:nestedScrollingEnabled="false" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- Bottom buttons -->
     <LinearLayout
