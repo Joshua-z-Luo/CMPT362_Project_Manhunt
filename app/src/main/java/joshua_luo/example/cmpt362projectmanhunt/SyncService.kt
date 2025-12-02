@@ -51,9 +51,16 @@ class SyncService : Service(), SharedPreferences.OnSharedPreferenceChangeListene
         private const val PREF_ROOM_STATE_JSON = "room_state_json"
         private const val PREF_PLAYER_LOCATIONS = "player_locations_json"
         private const val PREF_PLAYER_ABILITIES = "player_abilities_json"
-        private const val PREF_ROOM_SETTINGS_JSON = "room_settings_json"
         private const val PREF_PENDING_ABILITY_ID = "pending_ability_id"
         private const val PREF_SYNC_ENABLED = "sync_enabled"
+
+        // Game state keys
+        private const val PREF_GAME_STARTED = "game_started"
+        private const val PREF_HUNTER_ID = "hunter_id"
+        private const val PREF_TIMER_MINUTES = "timer_minutes"
+        private const val PREF_HUNTER_RANGE = "hunter_range"
+        private const val PREF_RUNNER_RANGE = "runner_range"
+        private const val PREF_ABILITY_MODE = "ability_mode"
 
         private const val CHANNEL_ID = "manhunt_sync_channel"
         private const val NOTIFICATION_ID = 1001
@@ -77,8 +84,12 @@ class SyncService : Service(), SharedPreferences.OnSharedPreferenceChangeListene
     private var lastRoleSent: String? = null
     private var lastHealthSent: Int? = null
 
+    // Track what we've sent to avoid duplicate sends
+    private var lastGameStartedSent: Boolean = false
+    private var lastHunterIdSent: String? = null
+
     @Volatile
-    private var updatingSettingsFromServer: Boolean = false
+    private var updatingFromServer: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
@@ -195,17 +206,40 @@ class SyncService : Service(), SharedPreferences.OnSharedPreferenceChangeListene
         pollJob?.cancel()
         pollJob = scope.launch {
             while (isActive) {
-                sendPendingAbilityIfAny(baseUrl, code, userId, token)
                 sendStatusIfChanged(baseUrl, code, userId, token)
+                sendPendingAbilityIfAny(baseUrl, code, userId, token)
+                sendGameStartIfChanged(baseUrl, code, userId, token)
                 try {
-                    val r = Request.Builder()
-                        .url("$baseUrl/rooms/$code/state")
-                        .get()
-                        .build()
+                    val r = Request.Builder().url("$baseUrl/rooms/$code/state").get().build()
                     client.newCall(r).execute().use { resp ->
                         val txt = resp.body?.string().orEmpty()
-                        if (resp.isSuccessful && txt.isNotBlank()) {
+                        if (resp.isSuccessful) {
                             val obj = JSONObject(txt)
+
+                            // Read all state from server and update local prefs
+                            updatingFromServer = true
+
+                            val gameStarted = obj.optBoolean("gameStarted", false)
+                            val hunterId = obj.optString("hunterId", "")
+                            val timerMinutes = obj.optInt("timerMinutes", 30)
+                            val hunterRange = obj.optInt("hunterRange", 50)
+                            val runnerRange = obj.optInt("runnerRange", 100)
+                            val abilityMode = obj.optBoolean("abilityMode", false)
+
+                            prefs.edit().apply {
+                                putBoolean(PREF_GAME_STARTED, gameStarted)
+                                if (gameStarted && hunterId.isNotBlank()) {
+                                    putString(PREF_HUNTER_ID, hunterId)
+                                }
+                                putInt(PREF_TIMER_MINUTES, timerMinutes)
+                                putInt(PREF_HUNTER_RANGE, hunterRange)
+                                putInt(PREF_RUNNER_RANGE, runnerRange)
+                                putBoolean(PREF_ABILITY_MODE, abilityMode)
+                                apply()
+                            }
+
+                            updatingFromServer = false
+
                             val membersArr = obj.optJSONArray("members") ?: JSONArray()
 
                             val stateJson = JSONObject()
@@ -252,34 +286,7 @@ class SyncService : Service(), SharedPreferences.OnSharedPreferenceChangeListene
                     }
                 } catch (_: Exception) {
                 }
-                try {
-                    fetchSettingsOnce(baseUrl, code)
-                } catch (_: Exception) {
-                }
                 delay(POLL_INTERVAL_MS)
-            }
-        }
-    }
-
-    private fun fetchSettingsOnce(baseUrl: String, code: String) {
-        val r = Request.Builder()
-            .url("$baseUrl/rooms/$code/settings")
-            .get()
-            .build()
-        client.newCall(r).execute().use { resp ->
-            val txt = resp.body?.string().orEmpty()
-            if (resp.isSuccessful && txt.isNotBlank()) {
-                val trimmed = txt.trim()
-                val settingsJsonString = if (trimmed.startsWith("[")) {
-                    JSONObject().put("settings", JSONArray(trimmed)).toString()
-                } else {
-                    trimmed
-                }
-                updatingSettingsFromServer = true
-                prefs.edit()
-                    .putString(PREF_ROOM_SETTINGS_JSON, settingsJsonString)
-                    .apply()
-                updatingSettingsFromServer = false
             }
         }
     }
@@ -327,6 +334,49 @@ class SyncService : Service(), SharedPreferences.OnSharedPreferenceChangeListene
         }
     }
 
+    private fun sendGameStartIfChanged(baseUrl: String, code: String, userId: String, token: String) {
+        if (updatingFromServer) return
+
+        val gameStarted = prefs.getBoolean(PREF_GAME_STARTED, false)
+        val hunterId = prefs.getString(PREF_HUNTER_ID, null)
+
+        val shouldSend = gameStarted != lastGameStartedSent ||
+                (gameStarted && hunterId != lastHunterIdSent)
+
+        if (!shouldSend) return
+
+        lastGameStartedSent = gameStarted
+        lastHunterIdSent = hunterId
+
+        if (!gameStarted) return
+
+        val timerMinutes = prefs.getInt(PREF_TIMER_MINUTES, 30)
+        val hunterRange = prefs.getInt(PREF_HUNTER_RANGE, 50)
+        val runnerRange = prefs.getInt(PREF_RUNNER_RANGE, 100)
+        val abilityMode = prefs.getBoolean(PREF_ABILITY_MODE, false)
+
+        scope.launch {
+            try {
+                val bodyObj = JSONObject().apply {
+                    put("userId", userId)
+                    put("token", token)
+                    put("gameStarted", true)
+                    put("hunterId", hunterId ?: "")
+                    put("timerMinutes", timerMinutes)
+                    put("hunterRange", hunterRange)
+                    put("runnerRange", runnerRange)
+                    put("abilityMode", abilityMode)
+                }
+                val req = Request.Builder()
+                    .url("$baseUrl/rooms/$code/gameStart")
+                    .post(bodyObj.toString().toRequestBody("application/json".toMediaType()))
+                    .build()
+                client.newCall(req).execute().close()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     private fun sendPendingAbilityIfAny(baseUrl: String, code: String, userId: String, token: String) {
         val abilityId = prefs.getString(PREF_PENDING_ABILITY_ID, null)?.trim()
         if (abilityId.isNullOrEmpty()) return
@@ -351,24 +401,8 @@ class SyncService : Service(), SharedPreferences.OnSharedPreferenceChangeListene
         }
     }
 
-    private fun pushSettingsIfNeeded(baseUrl: String, code: String) {
-        val json = prefs.getString(PREF_ROOM_SETTINGS_JSON, null)?.trim() ?: return
-        if (json.isEmpty()) return
-        scope.launch {
-            try {
-                val bodyStr = json
-                val req = Request.Builder()
-                    .url("$baseUrl/rooms/$code/settings")
-                    .post(bodyStr.toRequestBody("application/json".toMediaType()))
-                    .build()
-                client.newCall(req).execute().close()
-            } catch (_: Exception) {
-            }
-        }
-    }
-
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == null) return
+        if (key == null || updatingFromServer) return
 
         if (key == PREF_BASE_URL || key == PREF_ROOM_CODE || key == PREF_USER_ID || key == PREF_TOKEN || key == PREF_SYNC_ENABLED) {
             startOrStopSyncFromPrefs()
@@ -391,11 +425,13 @@ class SyncService : Service(), SharedPreferences.OnSharedPreferenceChangeListene
                 sendPendingAbilityIfAny(base, code, uid, tok)
             }
         }
-        if (key == PREF_ROOM_SETTINGS_JSON && !updatingSettingsFromServer) {
+        if (key == PREF_GAME_STARTED || key == PREF_HUNTER_ID) {
             val base = prefs.getString(PREF_BASE_URL, null)
             val code = prefs.getString(PREF_ROOM_CODE, null)
-            if (!base.isNullOrBlank() && !code.isNullOrBlank()) {
-                pushSettingsIfNeeded(base, code)
+            val uid = prefs.getString(PREF_USER_ID, null)
+            val tok = prefs.getString(PREF_TOKEN, null)
+            if (!base.isNullOrBlank() && !code.isNullOrBlank() && !uid.isNullOrBlank() && !tok.isNullOrBlank()) {
+                sendGameStartIfChanged(base, code, uid, tok)
             }
         }
     }

@@ -91,6 +91,27 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Cmpt362ProjectManhunt" />
 
+        <!-- Runner Game Page -->
+        <activity
+            android:name=".RunnerGameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Caught Activity -->
+        <activity
+            android:name=".CaughtActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Game End Activity -->
+        <activity
+            android:name=".GameEndActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
         <!-- Foreground sync service for location + room state -->
         <service
             android:name=".SyncService"
