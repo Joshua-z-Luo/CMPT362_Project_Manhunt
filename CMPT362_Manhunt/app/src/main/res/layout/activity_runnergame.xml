@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Header -->
+    <LinearLayout
+        android:id="@+id/headerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#FF1976D2"
+        android:padding="16dp"
+        android:layout_alignParentTop="true">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="You are RUNNER!!!"
+            android:textSize="32sp"
+            android:textColor="#FFFFFFFF"
+            android:textAlignment="center"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/tvGameTimer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="28min 23sec"
+            android:textSize="24sp"
+            android:textColor="#FFFFFFFF"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+    <!-- Google Map -->
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/headerLayout"
+        android:layout_above="@id/buttonContainer" />
+
+    <!-- Button Container -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- I Got Caught Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCaught"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="I Got Caught!"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            map:backgroundTint="#FFFF5252"
+            android:textColor="#FFFFFFFF"
+            map:icon="@android:drawable/ic_delete"
+            map:iconGravity="textStart" />
+
+        <!-- Ability Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/abilityButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Abilities"
+            android:textSize="18sp"
+            android:padding="16dp"
+            map:backgroundTint="#FF1976D2"
+            android:textColor="#FFFFFFFF"
+            map:icon="@android:drawable/ic_menu_view"
+            map:iconGravity="textStart" />
+    </LinearLayout>
+
+</RelativeLayout>

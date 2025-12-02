@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Cmpt362ProjectManhunt">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDZeH1ETVQIPbFl6u1eMf1unGcjwcU44P8" />
+
+        <!-- New launcher activity (Home screen) -->
+        <activity
+            android:name=".HomeActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Lobby Page -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Profile -->
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Profile Settings -->
+        <activity
+            android:name=".ProfileSettingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Help -->
+        <activity
+            android:name=".HelpActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Settings Page -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Settings"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Countdown Page -->
+        <activity
+            android:name=".CountdownActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Hunter Game Page -->
+        <activity
+            android:name=".HunterGameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Runner Game Page -->
+        <activity
+            android:name=".RunnerGameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Caught Activity -->
+        <activity
+            android:name=".CaughtActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Game End Activity -->
+        <activity
+            android:name=".GameEndActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Cmpt362ProjectManhunt" />
+
+        <!-- Foreground sync service for location + room state -->
+        <service
+            android:name=".SyncService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="joshua_luo.example.cmpt362projectmanhunt"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>
