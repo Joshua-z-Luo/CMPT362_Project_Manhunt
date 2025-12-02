@@ -366,7 +366,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun joinRoomSuspend(baseUrl: String, code: String, name: String?): Pair<String, String> {
-        val body = JSONObject().apply { if (!name.isNullOrBlank()) put("name", name) }.toString()
+        val body = JSONObject().apply {
+            if (!name.isNullOrBlank()) put("name", name)
+            put("health", 100)
+        }.toString()
         val req = Request.Builder()
             .url("$baseUrl/rooms/$code/join")
             .post(body.toRequestBody("application/json".toMediaType()))
@@ -574,15 +577,13 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
 
-                            // Update sync prefs with server settings so UI can read them
                             syncPrefs.edit().apply {
-                                putInt("server_timerMinutes", timerMinutes)
+                                putInt("server_timerMinutes", timerMinutes )
                                 putInt("server_hunterRange", hunterRange)
                                 putInt("server_runnerRange", runnerRange)
                                 putInt("server_abilityMode", if (abilityMode) 1 else 0)
                                 apply()
                             }
-
 
                             withContext(Dispatchers.Main) {
                                 updateSettingsDisplay()
@@ -595,17 +596,15 @@ class MainActivity : ComponentActivity() {
 
                                 android.util.Log.d("MainActivity", "LAUNCHING GAME!")
 
-                                // Save token
+                                //save token
                                 val prefs = getSharedPreferences("GameData", MODE_PRIVATE)
                                 prefs.edit().putString("token", tok).apply()
 
-                                // Launch game on main thread
+                                //launch game on main thread
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(this@MainActivity, "Game starting!", Toast.LENGTH_SHORT).show()
                                     launchCountdownActivity(hunterId, timerMinutes, hunterRange, runnerRange, abilityMode)
                                 }
-
-                                // Stop polling after launching
                                 cancel()
                                 return@use
                             }
@@ -614,7 +613,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Also poll state for members list
                     val r2 = Request.Builder().url("$baseUrl/rooms/$code/state").get().build()
                     client.newCall(r2).execute().use { resp ->
                         val txt = resp.body?.string().orEmpty()
