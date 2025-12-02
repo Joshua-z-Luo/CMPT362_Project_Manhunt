@@ -106,6 +106,11 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Default name is saved username
+        val profilePrefs = getSharedPreferences("ProfilePrefs",MODE_PRIVATE)
+        val savedName = profilePrefs.getString("username_key", "")
+        etDisplayName.setText(savedName)
+
         btnStartLobby.setOnClickListener {
             permReq.launch(
                 arrayOf(

@@ -1,6 +1,7 @@
 package joshua_luo.example.cmpt362projectmanhunt
 
 import android.os.Bundle
+import android.text.Html
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -12,15 +13,26 @@ class HelpActivity: AppCompatActivity() {
     private lateinit var gameRulesHeader: TextView
     private lateinit var hunterRulesHeader: TextView
     private lateinit var runnerRulesHeader: TextView
-    private lateinit var gameModeHeader: TextView
     private lateinit var hunterAbilityHeader: TextView
     private lateinit var runnerAbilityHeader: TextView
+    private lateinit var achievementHeader: TextView
+
+
     private lateinit var gameRulesContent: LinearLayout
     private lateinit var hunterRulesContent: LinearLayout
     private lateinit var runnerRulesContent: LinearLayout
-    private lateinit var gameModeContent: LinearLayout
     private lateinit var hunterAbilityContent: LinearLayout
     private lateinit var runnerAbilityContent: LinearLayout
+    private lateinit var achievementContent: LinearLayout
+
+
+    private lateinit var gameRulesText: TextView
+    private lateinit var hunterRulesText: TextView
+    private lateinit var runnerRulesText: TextView
+    private lateinit var hunterAbilityText: TextView
+    private lateinit var runnerAbilityText: TextView
+    private lateinit var achievementText: TextView
+
 
     private lateinit var exitBtn: Button
 
@@ -31,16 +43,22 @@ class HelpActivity: AppCompatActivity() {
         gameRulesHeader = findViewById(R.id.game_rules_header)
         hunterRulesHeader = findViewById(R.id.hunter_rules_header)
         runnerRulesHeader = findViewById(R.id.runner_rules_header)
-        gameModeHeader = findViewById(R.id.game_modes_header)
         hunterAbilityHeader = findViewById(R.id.hunter_abilities_header)
         runnerAbilityHeader = findViewById(R.id.runner_abilities_header)
+        achievementHeader = findViewById(R.id.achievement_header)
 
         gameRulesContent = findViewById(R.id.game_rules)
         hunterRulesContent = findViewById(R.id.hunter_rules)
         runnerRulesContent = findViewById(R.id.runner_rules)
-        gameModeContent = findViewById(R.id.game_modes)
         hunterAbilityContent = findViewById(R.id.hunter_abilities)
         runnerAbilityContent = findViewById(R.id.runner_abilities)
+        achievementContent = findViewById(R.id.achievements)
+
+        gameRulesText = findViewById(R.id.game_rule_text)
+        hunterRulesText = findViewById(R.id.hunter_rules_text)
+        runnerRulesText = findViewById(R.id.runner_rules_text)
+        hunterAbilityText = findViewById(R.id.hunter_abilities_text)
+        runnerAbilityText = findViewById(R.id.runner_abilities_text)
 
         exitBtn = findViewById(R.id.btnExit)
 
@@ -49,13 +67,6 @@ class HelpActivity: AppCompatActivity() {
                 gameRulesContent.visibility = View.VISIBLE
             } else {
                 gameRulesContent.visibility = View.GONE
-            }
-        }
-        gameModeHeader.setOnClickListener {
-            if (gameModeContent.visibility == View.GONE) {
-                gameModeContent.visibility = View.VISIBLE
-            } else {
-                gameModeContent.visibility = View.GONE
             }
         }
         hunterRulesHeader.setOnClickListener {
@@ -84,6 +95,13 @@ class HelpActivity: AppCompatActivity() {
                 runnerAbilityContent.visibility = View.VISIBLE
             } else {
                 runnerAbilityContent.visibility = View.GONE
+            }
+        }
+        achievementHeader.setOnClickListener {
+            if (achievementContent.visibility == View.GONE) {
+                achievementContent.visibility = View.VISIBLE
+            } else {
+                achievementContent.visibility = View.GONE
             }
         }
         exitBtn.setOnClickListener {

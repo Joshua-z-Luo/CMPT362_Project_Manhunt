@@ -50,45 +50,12 @@
                 android:background="#EEEEEE">
 
                 <TextView
+                    android:id="@+id/game_rule_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="This is the game rules." />
+                    android:padding="6dp"
+                    android:text="@string/gameRuleText" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Add more rules here." />
-            </LinearLayout>
-
-            <!-- Game Modes -->
-            <TextView
-                android:id="@+id/game_modes_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Game Modes"
-                android:textSize="18sp"
-                android:background="#DDDDDD"
-                android:layout_marginTop="8dp"
-                android:padding="12dp" />
-
-            <LinearLayout
-                android:id="@+id/game_modes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                android:padding="12dp"
-                android:background="#EEEEEE">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="This is the game modes." />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Add more modes here." />
             </LinearLayout>
 
             <!-- Hunter Rules -->
@@ -112,14 +79,12 @@
                 android:background="#EEEEEE">
 
                 <TextView
+                    android:id="@+id/hunter_rules_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="This is the hunter rules." />
+                    android:padding="6dp"
+                    android:text="@string/hunterRuleText" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Add more rules here." />
             </LinearLayout>
 
             <!-- Runner Rules -->
@@ -143,14 +108,12 @@
                 android:background="#EEEEEE">
 
                 <TextView
+                    android:id="@+id/runner_rules_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="This is the runner rules." />
+                    android:padding="6dp"
+                    android:text="@string/runnerRuleText" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Add more rules here." />
             </LinearLayout>
 
             <!-- Hunter Abilities -->
@@ -174,14 +137,12 @@
                 android:background="#EEEEEE">
 
                 <TextView
+                    android:id="@+id/hunter_abilities_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="This is a hunter ability." />
+                    android:padding="6dp"
+                    android:text="@string/hunterAbilityText" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Add more abilities." />
             </LinearLayout>
 
             <!-- Runner Abilities -->
@@ -205,15 +166,47 @@
                 android:background="#EEEEEE">
 
                 <TextView
+                    android:id="@+id/runner_abilities_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="This is a runner ability." />
+                    android:padding="6dp"
+                    android:text="@string/runnerAbilityText" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Add more abilities." />
             </LinearLayout>
+
+            <!-- Achievements -->
+            <TextView
+                android:id="@+id/achievement_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Achievements"
+                android:textSize="18sp"
+                android:layout_marginTop="8dp"
+                android:background="#DDDDDD"
+                android:padding="12dp"/>
+
+            <LinearLayout
+                android:id="@+id/achievements"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:padding="12dp"
+                android:background="#EEEEEE">
+
+            <TextView
+                android:id="@+id/achievement_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:text="@string/achievementText" />
+
+            </LinearLayout>
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="60dp" />
 
         </LinearLayout>
 

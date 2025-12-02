@@ -1,6 +1,7 @@
 package joshua_luo.example.cmpt362projectmanhunt
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -17,13 +18,14 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import java.io.File
 import androidx.core.content.edit
+import java.io.FileOutputStream
 
 class ProfileSettingActivity: AppCompatActivity(), MyDialog.PhotoDialogListener {
     private lateinit var tempImgUri: Uri
     private lateinit var permImgUri: Uri
     private lateinit var cameraResult: ActivityResultLauncher<Intent>
     private lateinit var galleryResult: ActivityResultLauncher<Intent>
-    private lateinit var profileViewModel: ProfileViewModel
+    private lateinit var profileViewModel: ProfileSettingsViewModel
 
     private lateinit var profilePhoto: ImageView
     private lateinit var changeBtn: Button
@@ -46,6 +48,8 @@ class ProfileSettingActivity: AppCompatActivity(), MyDialog.PhotoDialogListener 
         notification = findViewById(R.id.notificationSwitch)
         volumeSlide = findViewById(R.id.volumeBar)
 
+
+
         // Permissions
         Util.checkPermissions(this)
 
@@ -66,8 +70,14 @@ class ProfileSettingActivity: AppCompatActivity(), MyDialog.PhotoDialogListener 
             result: ActivityResult ->
                 if (result.resultCode == RESULT_OK && result.data != null) {
                     val uri = result.data!!.data
+
                     val picture = Util.getBitmap(this, uri!!)
                     profileViewModel.userImage.value = picture
+
+                    val tempImgFile = File(getExternalFilesDir(null), "temp_profile_photo.jpg")
+                    val output = FileOutputStream(tempImgFile)
+                    picture.compress(Bitmap.CompressFormat.JPEG, 90, output)
+                    output.close()
                 }
         }
 
@@ -79,7 +89,7 @@ class ProfileSettingActivity: AppCompatActivity(), MyDialog.PhotoDialogListener 
             dialog.show(supportFragmentManager, "PhotoDialog")
         }
 
-        profileViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
+        profileViewModel = ViewModelProvider(this)[ProfileSettingsViewModel::class.java]
         profileViewModel.userImage.observe(this) {
             profilePhoto.setImageBitmap(it)
         }
