@@ -101,6 +101,10 @@ class ProfileActivity : AppCompatActivity() {
             finish()
         }
 
+        // testing
+        // insertFakeStats()
+        // insertFakeGameHistory()
+
         // Load achievements & stats from DB
         updateAchievementsAndStatsUi()
 
@@ -127,7 +131,7 @@ class ProfileActivity : AppCompatActivity() {
         viewModel.gameHistory.observe(this) { history ->
             val mapped = history.map { game ->
                 MatchHistoryItem(
-                    gameId = game.finishedAt.toString(),
+                    gameId = game.id.toString(),
                     winner = game.result,
                     role = game.role,
                     duration = game.timeHiddenMs / 1000.0
@@ -160,4 +164,48 @@ class ProfileActivity : AppCompatActivity() {
         username.text = String.format("Username: %s", name)
 
     }
+
+    // Testing achievements using stats
+//    private fun insertFakeStats() {
+//        lifecycleScope.launch(Dispatchers.IO) {
+//            val fakeStats = PlayerStatsEntity(
+//                totalGames = 3,           // triggers "First Game"
+//                totalWins = 2,            // triggers "First Win"
+//                totalDistanceMeters = 6000, // triggers "Runner: 5km travelled"
+//                totalTimeHiddenMs = 15_000,
+//                totalTagsDone = 12,       // triggers "Hunter Elite: 10 tags"
+//                totalTagsReceived = 5
+//            )
+//            statsDao.insertStats(fakeStats)
+//
+//            withContext(Dispatchers.Main) {
+//                updateAchievementsAndStatsUi()
+//            }
+//        }
+//    }
+
+    // Test game history
+//    private fun insertFakeGameHistory() {
+//        lifecycleScope.launch(Dispatchers.IO) {
+//            val fakeGames = listOf(
+//                GameHistoryEntity(
+//                    finishedAt = System.currentTimeMillis(),
+//                    role = "Runner",
+//                    result = "Win",
+//                    distanceMeters = 3000,
+//                    timeHiddenMs = 5000,
+//                    timeAsHunterMs = 0,
+//                    tagsDone = 0,
+//                    tagsReceived = 1
+//                )
+//            )
+//
+//            fakeGames.forEach { statsDao.insertGame(it) }
+//
+//            withContext(Dispatchers.Main) {
+//                updateHistoryUi()
+//            }
+//        }
+//    }
+
 }
