@@ -259,7 +259,7 @@ Ensure:
 
 ---
 
-# 🛠️ Troubleshooting
+# Troubleshooting
 
 ### Map is blank / grey
 - Google Maps API key may be missing or invalid
@@ -276,7 +276,7 @@ Ensure:
 
 ---
 
-# 🙌 Credits
+# Credits
 ### Team Members
 - Parth Patel
 - Joshua Luo
