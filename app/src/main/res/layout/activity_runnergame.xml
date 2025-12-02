@@ -10,14 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#FFB71C1C"
+        android:background="#FF1976D2"
         android:padding="16dp"
         android:layout_alignParentTop="true">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="You are HUNTER!!!"
+            android:text="You are RUNNER!!!"
             android:textSize="32sp"
             android:textColor="#FFFFFFFF"
             android:textAlignment="center"
@@ -44,21 +44,43 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/headerLayout"
-        android:layout_above="@id/abilityButton" />
+        android:layout_above="@id/buttonContainer" />
 
-    <!-- Ability Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/abilityButton"
+    <!-- Button Container -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_margin="16dp"
-        android:text="Abilities"
-        android:textSize="18sp"
-        android:padding="16dp"
-        map:backgroundTint="?attr/colorPrimary"
-        android:textColor="?attr/colorOnPrimary"
-        map:icon="@android:drawable/ic_menu_view"
-        map:iconGravity="textStart" />
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- I Got Caught Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCaught"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="I Got Caught!"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp"
+            map:backgroundTint="#FFFF5252"
+            android:textColor="#FFFFFFFF"
+            map:icon="@android:drawable/ic_delete"
+            map:iconGravity="textStart" />
+
+        <!-- Ability Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/abilityButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Abilities"
+            android:textSize="18sp"
+            android:padding="16dp"
+            map:backgroundTint="#FF1976D2"
+            android:textColor="#FFFFFFFF"
+            map:icon="@android:drawable/ic_menu_view"
+            map:iconGravity="textStart" />
+    </LinearLayout>
 
 </RelativeLayout>
